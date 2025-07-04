@@ -174,36 +174,6 @@ The backend provides the following API endpoints:
 2. Compare happiness scores across different world regions
 3. Analyze regional trends and patterns
 
-## Troubleshooting
-
-### Common Issues
-
-1. **"Failed to fetch" errors**
-   - Ensure the backend server is running on port 5000
-   - Check that `.env.local` has the correct API URL
-   - Verify CORS settings allow localhost:3000
-
-2. **Charts not loading**
-   - Check browser console for JavaScript errors
-   - Ensure Plotly.js is properly installed: `npm list react-plotly.js`
-   - Verify data is being fetched successfully in Network tab
-
-3. **Backend connection issues**
-   - Confirm backend server is running: check `http://localhost:5000/api/happiness/countries`
-   - Ensure data files are present in the `data/` directory
-   - Check backend console for error messages
-
-4. **Port conflicts**
-   - If port 3000 or 5000 is in use, update the configuration accordingly
-   - Frontend: Next.js will automatically suggest alternative ports
-   - Backend: Update the PORT in backend configuration and `.env.local`
-
-### Development Tips
-
-- Use browser Developer Tools (F12) to debug API calls and console errors
-- Check the Network tab to verify API responses
-- Monitor backend console for server-side errors
-- Use `npm run build` to test production builds
 
 ## Technologies Used
 
@@ -212,23 +182,3 @@ The backend provides the following API endpoints:
 - **Backend**: Node.js, Express.js
 - **Data Processing**: CSV parsing, statistical calculations
 - **Styling**: Tailwind CSS with responsive design
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Make your changes and test thoroughly
-4. Commit with clear messages: `git commit -m "Add feature description"`
-5. Push to your branch: `git push origin feature-name`
-6. Submit a pull request
-
-## Support
-
-If you encounter any issues during setup or usage:
-
-1. Check this README for troubleshooting steps
-2. Review browser console and backend logs for error messages
-3. Ensure all dependencies are properly installed
-4. Verify environment configuration matches the requirements
-
-For additional support, please refer to the project documentation or contact the development team.
