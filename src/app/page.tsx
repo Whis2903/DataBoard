@@ -22,7 +22,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
+      {}
       <div className="bg-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <h1 className="text-4xl font-bold text-gray-900 text-center mb-2">
@@ -34,7 +34,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
+      {}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4">
           <nav className="flex space-x-8 overflow-x-auto">
@@ -55,7 +55,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Content */}
+      {}
       <div className="max-w-7xl mx-auto px-4 py-8">
         {ActiveComponent && <ActiveComponent />}
       </div>

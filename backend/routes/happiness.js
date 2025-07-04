@@ -2,10 +2,6 @@ const express = require('express');
 const router = express.Router();
 const happinessService = require('../services/happiness');
 
-/**
- * GET /api/happiness/:country?start=:startYear&end=:endYear
- * Get happiness data for a specific country over time
- */
 router.get('/:country', async (req, res) => {
   try {
     const { country } = req.params;
@@ -60,10 +56,6 @@ router.get('/:country', async (req, res) => {
   }
 });
 
-/**
- * GET /api/happiness/global/:year
- * Get global happiness data for a specific year
- */
 router.get('/global/:year', async (req, res) => {
   try {
     const { year } = req.params;
@@ -111,10 +103,6 @@ router.get('/global/:year', async (req, res) => {
   }
 });
 
-/**
- * GET /api/happiness/region/:region
- * Get countries in a specific region
- */
 router.get('/region/:region', async (req, res) => {
   try {
     const { region } = req.params;
@@ -155,10 +143,6 @@ router.get('/region/:region', async (req, res) => {
   }
 });
 
-/**
- * GET /api/happiness/analysis/india
- * Get correlation analysis for India
- */
 router.get('/analysis/india', async (req, res) => {
   try {
     const cacheKey = 'happiness_analysis_india';

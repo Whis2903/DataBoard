@@ -2,7 +2,6 @@
 
 import dynamic from 'next/dynamic';
 
-// Create a dynamic wrapper for Plotly to avoid SSR issues
 const Plot = dynamic(() => import('react-plotly.js'), {
   ssr: false,
   loading: () => (

@@ -38,7 +38,6 @@ const RegionalComparison = () => {
 
   const availableYears = Array.from({ length: 14 }, (_, i) => 2024 - i);
 
-  // Load regions on mount
   useEffect(() => {
     const loadRegions = async () => {
       try {
@@ -54,7 +53,6 @@ const RegionalComparison = () => {
     loadRegions();
   }, [API_BASE]);
 
-  // Load data when parameters change
   useEffect(() => {
     if (selectedRegion && selectedIndicator && selectedYear) {
       handleComparison();
@@ -67,7 +65,6 @@ const RegionalComparison = () => {
     setData([]);
 
     try {
-      // Get countries in the region
       const regionResponse = await fetch(`${API_BASE}/classifications/countries/${encodeURIComponent(selectedRegion)}`);
       if (!regionResponse.ok) {
         throw new Error(`Failed to fetch region countries: HTTP ${regionResponse.status}`);
@@ -81,17 +78,14 @@ const RegionalComparison = () => {
 
       const regionCountries = regionResult.data;
       
-      // Fetch happiness and indicator data for each country
       const countryPromises = regionCountries.map(async (countryInfo: any) => {
         try {
-          // Get happiness data
           const happinessResponse = await fetch(`${API_BASE}/happiness/global/${selectedYear}`);
           const happinessResult = await happinessResponse.json();
           const countryHappiness = happinessResult.data?.find((h: any) => 
             h.country?.toLowerCase() === countryInfo.name?.toLowerCase()
           );
 
-          // Get indicator data
           const indicatorResponse = await fetch(
             `${API_BASE}/indicator/${countryInfo.code}/${selectedIndicator}?start=${selectedYear}&end=${selectedYear}`
           );
@@ -119,7 +113,6 @@ const RegionalComparison = () => {
 
       const results = await Promise.all(countryPromises);
       
-      // Filter out countries with missing data and sort by indicator value
       const validResults = results
         .filter(country => country.indicator_value !== null)
         .sort((a, b) => (b.indicator_value || 0) - (a.indicator_value || 0));
@@ -143,7 +136,7 @@ const RegionalComparison = () => {
         <h2 className="text-2xl font-bold text-gray-900 mb-6">🌏 Regional Comparison</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {/* Region Selection */}
+          {}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Region
@@ -161,7 +154,7 @@ const RegionalComparison = () => {
             </select>
           </div>
 
-          {/* Indicator Selection */}
+          {}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Indicator
@@ -179,7 +172,7 @@ const RegionalComparison = () => {
             </select>
           </div>
 
-          {/* Year Selection */}
+          {}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Year
@@ -199,7 +192,7 @@ const RegionalComparison = () => {
         </div>
       </div>
 
-      {/* Loading */}
+      {}
       {loading && (
         <div className="bg-white rounded-lg shadow-lg p-6 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -207,14 +200,14 @@ const RegionalComparison = () => {
         </div>
       )}
 
-      {/* Error Message */}
+      {}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-600">❌ {error}</p>
         </div>
       )}
 
-      {/* Regional Statistics */}
+      {}
       {data.length > 0 && (
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-4">
@@ -248,7 +241,7 @@ const RegionalComparison = () => {
         </div>
       )}
 
-      {/* Country Ranking Chart */}
+      {}
       {data.length > 0 && (
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-4">
@@ -283,7 +276,7 @@ const RegionalComparison = () => {
         </div>
       )}
 
-      {/* Detailed Table */}
+      {}
       {data.length > 0 && (
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-4">

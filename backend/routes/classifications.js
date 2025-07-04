@@ -2,10 +2,6 @@ const express = require('express');
 const router = express.Router();
 const worldBankService = require('../services/worldbank');
 
-/**
- * GET /api/classifications
- * Get country classifications by region and income group
- */
 router.get('/', async (req, res) => {
   try {
     const cacheKey = 'country_classifications';
@@ -19,20 +15,15 @@ router.get('/', async (req, res) => {
       });
     }
 
-    const data = await worldBankService.getCountryClassifications();
-    
-    // Group by regions and income levels for easier frontend consumption
+    const data = await worldBankService.getCountryClassifications();
     const regions = {};
     const incomeLevels = {};
     
-    data.forEach(country => {
-      // Group by region
+    data.forEach(country => {
       if (!regions[country.region]) {
         regions[country.region] = [];
       }
-      regions[country.region].push(country);
-      
-      // Group by income level
+      regions[country.region].push(country);
       if (!incomeLevels[country.incomeLevel]) {
         incomeLevels[country.incomeLevel] = [];
       }
@@ -53,7 +44,7 @@ router.get('/', async (req, res) => {
       }))
     };
 
-    req.cache.set(cacheKey, result, 86400); // Cache for 24 hours
+    req.cache.set(cacheKey, result, 86400); 
     
     res.json({
       data: result,
@@ -70,10 +61,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-/**
- * GET /api/classifications/regions
- * Get list of available regions
- */
 router.get('/regions', async (req, res) => {
   try {
     const cacheKey = 'regions_list';
@@ -107,10 +94,6 @@ router.get('/regions', async (req, res) => {
   }
 });
 
-/**
- * GET /api/classifications/countries/:region
- * Get countries in a specific region
- */
 router.get('/countries/:region', async (req, res) => {
   try {
     const { region } = req.params;

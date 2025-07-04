@@ -1,13 +1,10 @@
 const axios = require('axios');
 
 class WorldBankService {
-  constructor() {
-    // Official World Bank API endpoints
+  constructor() {
     this.baseURL = 'https://api.worldbank.org/v2';
     this.countriesURL = `${this.baseURL}/country`;
-    this.indicatorsURL = `${this.baseURL}/indicator`;
-    
-    // Request configuration
+    this.indicatorsURL = `${this.baseURL}/indicator`;
     this.requestConfig = {
       timeout: 15000,
       headers: {
@@ -16,14 +13,6 @@ class WorldBankService {
     };
   }
 
-  /**
-   * Fetch World Bank indicator data for a specific country
-   * @param {string} countryCode - ISO 3-letter country code
-   * @param {string} indicator - World Bank indicator code
-   * @param {number} startYear - Start year
-   * @param {number} endYear - End year
-   * @returns {Promise<Array>} Formatted data array
-   */
   async getIndicatorData(countryCode, indicator, startYear, endYear) {
     try {
       console.log(`Fetching ${indicator} data for ${countryCode} (${startYear}-${endYear})`);
@@ -39,9 +28,7 @@ class WorldBankService {
       const response = await axios.get(url, { 
         params, 
         ...this.requestConfig 
-      });
-      
-      // World Bank API returns array where [0] is metadata, [1] is data
+      });
       if (!response.data || !Array.isArray(response.data) || response.data.length < 2) {
         throw new Error('Invalid response format from World Bank API');
       }
@@ -73,9 +60,7 @@ class WorldBankService {
       return formattedData;
       
     } catch (error) {
-      console.error(`Error fetching indicator data for ${countryCode}:`, error.message);
-      
-      // Provide more specific error information
+      console.error(`Error fetching indicator data for ${countryCode}:`, error.message);
       if (error.response) {
         const status = error.response.status;
         const statusText = error.response.statusText;
@@ -88,11 +73,6 @@ class WorldBankService {
     }
   }
 
-  /**
-   * Get country classifications (regions and income groups) from World Bank
-   * Uses official World Bank country classification data
-   * @returns {Promise<Array>} Country classifications
-   */
   async getCountryClassifications() {
     try {
       console.log('Fetching country classifications from World Bank...');
@@ -100,7 +80,7 @@ class WorldBankService {
       const url = this.countriesURL;
       const params = {
         format: 'json',
-        per_page: 500, // Increased to get all countries
+        per_page: 500, 
         page: 1
       };
 
@@ -121,7 +101,7 @@ class WorldBankService {
           country.region?.value && 
           country.region.value !== 'Aggregates' &&
           country.id && 
-          country.id.length === 3 // Only ISO3 codes
+          country.id.length === 3 
         )
         .map(country => ({
           code: country.id,
@@ -151,12 +131,6 @@ class WorldBankService {
     }
   }
 
-  /**
-   * Get list of available World Bank indicators with enhanced filtering
-   * @param {string} topic - Optional topic filter
-   * @param {number} limit - Maximum number of indicators to return
-   * @returns {Promise<Array>} Available indicators
-   */
   async getAvailableIndicators(topic = '', limit = 50) {
     try {
       console.log(`Fetching available indicators ${topic ? `for topic: ${topic}` : '(all topics)'}`);
@@ -164,7 +138,7 @@ class WorldBankService {
       const url = this.indicatorsURL;
       const params = {
         format: 'json',
-        per_page: Math.min(limit * 2, 1000), // Fetch more to filter later
+        per_page: Math.min(limit * 2, 1000), 
         page: 1,
         ...(topic && { topic })
       };
@@ -185,8 +159,8 @@ class WorldBankService {
           indicator && 
           indicator.name && 
           indicator.id &&
-          indicator.name.length > 10 && // Filter out very short names
-          !indicator.name.includes('(") &&') // Filter out malformed names
+          indicator.name.length > 10 && 
+          !indicator.name.includes('(") &&') 
         )
         .map(indicator => ({
           id: indicator.id,
@@ -208,13 +182,6 @@ class WorldBankService {
     }
   }
 
-  /**
-   * Get multiple countries data for comparison
-   * @param {Array} countryCodes - Array of country codes
-   * @param {string} indicator - Indicator code
-   * @param {number} year - Specific year
-   * @returns {Promise<Array>} Comparison data
-   */
   async getMultiCountryData(countryCodes, indicator, year) {
     try {
       const promises = countryCodes.map(code => 

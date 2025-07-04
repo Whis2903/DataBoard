@@ -57,7 +57,6 @@ const IndicatorComparison = () => {
     setCorrelation(null);
 
     try {
-      // Fetch happiness data
       const happinessResponse = await fetch(
         `${API_BASE}/happiness/${selectedCountry}?start=${startYear}&end=${endYear}`
       );
@@ -66,7 +65,6 @@ const IndicatorComparison = () => {
       }
       const happinessResult = await happinessResponse.json();
 
-      // Fetch indicator data
       const indicatorResponse = await fetch(
         `${API_BASE}/indicator/${selectedCountry}/${selectedIndicator}?start=${startYear}&end=${endYear}`
       );
@@ -78,7 +76,6 @@ const IndicatorComparison = () => {
       const happinessData = happinessResult.data || [];
       const indicatorData = indicatorResult.data || [];
 
-      // Combine data by year
       const combinedData: ComparisonData[] = [];
       const indicatorName = availableIndicators.find(ind => ind.code === selectedIndicator)?.name || selectedIndicator;
 
@@ -113,7 +110,7 @@ const IndicatorComparison = () => {
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* Country Selection */}
+            {}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Country
@@ -134,7 +131,7 @@ const IndicatorComparison = () => {
               </select>
             </div>
 
-            {/* Indicator Selection */}
+            {}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Indicator
@@ -152,7 +149,7 @@ const IndicatorComparison = () => {
               </select>
             </div>
 
-            {/* Start Year */}
+            {}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Start Year
@@ -167,7 +164,7 @@ const IndicatorComparison = () => {
               />
             </div>
 
-            {/* End Year */}
+            {}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 End Year
@@ -182,7 +179,7 @@ const IndicatorComparison = () => {
               />
             </div>
 
-            {/* Submit Button */}
+            {}
             <div className="flex items-end">
               <button
                 type="submit"
@@ -196,14 +193,14 @@ const IndicatorComparison = () => {
         </form>
       </div>
 
-      {/* Error Message */}
+      {}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-600">❌ {error}</p>
         </div>
       )}
 
-      {/* Correlation Insight */}
+      {}
       {correlation !== null && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-blue-900 mb-2">📊 Correlation Analysis</h3>
@@ -217,7 +214,7 @@ const IndicatorComparison = () => {
         </div>
       )}
 
-      {/* Chart */}
+      {}
       {data.length > 0 && (
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-4">

@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Plot from '../components/Charts';
 
 interface CountryData {
   country: string;
+  countryCode?: string;
   happinessScore: number;
   region: string;
   rank?: number;
@@ -32,13 +34,13 @@ const WorldMap = () => {
       const response = await fetch(`${API_BASE}/happiness/global/${selectedYear}`);
       const result = await response.json();
       
-      if (result.data) {
-        // Sort by happiness score and add ranks
+      if (result.data) {
         const sortedData = result.data
           .sort((a: CountryData, b: CountryData) => b.happinessScore - a.happinessScore)
           .map((item: CountryData, index: number) => ({
             ...item,
-            rank: index + 1
+            rank: index + 1,
+            countryCode: getCountryCode(item.country)
           }));
         
         setData(sortedData);
@@ -49,6 +51,54 @@ const WorldMap = () => {
     } finally {
       setLoading(false);
     }
+  };
+  const getCountryCode = (countryName: string): string => {
+    const countryMap: Record<string, string> = {
+      'Denmark': 'DNK', 'Switzerland': 'CHE', 'Iceland': 'ISL', 'Norway': 'NOR', 
+      'Netherlands': 'NLD', 'Sweden': 'SWE', 'United States': 'USA', 'United Kingdom': 'GBR',
+      'Germany': 'DEU', 'Canada': 'CAN', 'India': 'IND', 'China': 'CHN', 'Japan': 'JPN',
+      'Brazil': 'BRA', 'South Africa': 'ZAF', 'Australia': 'AUS', 'France': 'FRA',
+      'Italy': 'ITA', 'Spain': 'ESP', 'Portugal': 'PRT', 'Finland': 'FIN', 'Austria': 'AUT',
+      'Belgium': 'BEL', 'Ireland': 'IRL', 'Luxembourg': 'LUX', 'New Zealand': 'NZL',
+      'Israel': 'ISR', 'South Korea': 'KOR', 'Singapore': 'SGP', 'Mexico': 'MEX',
+      'Argentina': 'ARG', 'Chile': 'CHL', 'Colombia': 'COL', 'Peru': 'PER', 'Russia': 'RUS',
+      'Poland': 'POL', 'Czech Republic': 'CZE', 'Hungary': 'HUN', 'Slovakia': 'SVK',
+      'Slovenia': 'SVN', 'Estonia': 'EST', 'Latvia': 'LVA', 'Lithuania': 'LTU',
+      'Croatia': 'HRV', 'Greece': 'GRC', 'Turkey': 'TUR', 'Thailand': 'THA',
+      'Malaysia': 'MYS', 'Indonesia': 'IDN', 'Philippines': 'PHL', 'Vietnam': 'VNM',
+      'Pakistan': 'PAK', 'Bangladesh': 'BGD', 'Sri Lanka': 'LKA', 'Egypt': 'EGY',
+      'Nigeria': 'NGA', 'Ghana': 'GHA', 'Kenya': 'KEN', 'Ethiopia': 'ETH',
+      'Morocco': 'MAR', 'Algeria': 'DZA', 'Tunisia': 'TUN', 'Costa Rica': 'CRI',
+      'Uruguay': 'URY', 'Panama': 'PAN', 'Guatemala': 'GTM', 'Nicaragua': 'NIC',
+      'Honduras': 'HND', 'El Salvador': 'SLV', 'Dominican Republic': 'DOM',
+      'Jamaica': 'JAM', 'Trinidad and Tobago': 'TTO', 'Ecuador': 'ECU', 'Bolivia': 'BOL',
+      'Paraguay': 'PRY', 'Venezuela': 'VEN', 'Guyana': 'GUY', 'Suriname': 'SUR',
+      'Cyprus': 'CYP', 'Malta': 'MLT', 'Romania': 'ROU', 'Bulgaria': 'BGR',
+      'Serbia': 'SRB', 'Montenegro': 'MNE', 'Bosnia and Herzegovina': 'BIH',
+      'North Macedonia': 'MKD', 'Albania': 'ALB', 'Moldova': 'MDA', 'Ukraine': 'UKR',
+      'Belarus': 'BLR', 'Georgia': 'GEO', 'Armenia': 'ARM', 'Azerbaijan': 'AZE',
+      'Kazakhstan': 'KAZ', 'Uzbekistan': 'UZB', 'Turkmenistan': 'TKM',
+      'Kyrgyzstan': 'KGZ', 'Tajikistan': 'TJK', 'Mongolia': 'MNG', 'Nepal': 'NPL',
+      'Bhutan': 'BTN', 'Maldives': 'MDV', 'Myanmar': 'MMR', 'Cambodia': 'KHM',
+      'Laos': 'LAO', 'Afghanistan': 'AFG', 'Iran': 'IRN', 'Iraq': 'IRQ',
+      'Saudi Arabia': 'SAU', 'United Arab Emirates': 'ARE', 'Kuwait': 'KWT',
+      'Qatar': 'QAT', 'Bahrain': 'BHR', 'Oman': 'OMN', 'Yemen': 'YEM',
+      'Jordan': 'JOR', 'Lebanon': 'LBN', 'Syria': 'SYR', 'Libya': 'LBY',
+      'Sudan': 'SDN', 'South Sudan': 'SSD', 'Chad': 'TCD', 'Niger': 'NER',
+      'Mali': 'MLI', 'Burkina Faso': 'BFA', 'Senegal': 'SEN', 'Gambia': 'GMB',
+      'Guinea-Bissau': 'GNB', 'Guinea': 'GIN', 'Sierra Leone': 'SLE',
+      'Liberia': 'LBR', 'Ivory Coast': 'CIV', 'Togo': 'TGO', 'Benin': 'BEN',
+      'Mauritania': 'MRT', 'Cape Verde': 'CPV', 'Sao Tome and Principe': 'STP',
+      'Equatorial Guinea': 'GNQ', 'Gabon': 'GAB', 'Congo': 'COG',
+      'Democratic Republic of the Congo': 'COD', 'Central African Republic': 'CAF',
+      'Cameroon': 'CMR', 'Comoros': 'COM', 'Djibouti': 'DJI',
+      'Eritrea': 'ERI', 'Eswatini': 'SWZ', 'Lesotho': 'LSO', 'Madagascar': 'MDG',
+      'Malawi': 'MWI', 'Mauritius': 'MUS', 'Mozambique': 'MOZ', 'Namibia': 'NAM',
+      'Rwanda': 'RWA', 'Seychelles': 'SYC', 'Somalia': 'SOM', 'Tanzania': 'TZA',
+      'Uganda': 'UGA', 'Zambia': 'ZMB', 'Zimbabwe': 'ZWE', 'Botswana': 'BWA',
+      'Angola': 'AGO'
+    };
+    return countryMap[countryName] || '';
   };
 
   const getHappinessColor = (score: number) => {
@@ -65,9 +115,7 @@ const WorldMap = () => {
     if (score >= 5) return 'Moderate';
     if (score >= 4) return 'Low';
     return 'Very Low';
-  };
-
-  // Group countries by region
+  };
   const groupedByRegion = data.reduce((acc, country) => {
     if (!acc[country.region]) {
       acc[country.region] = [];
@@ -98,7 +146,7 @@ const WorldMap = () => {
           </select>
         </div>
 
-        {/* Color Legend */}
+        {}
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">Happiness Score Legend</h3>
           <div className="flex flex-wrap gap-4">
@@ -126,7 +174,102 @@ const WorldMap = () => {
         </div>
       </div>
 
-      {/* Loading */}
+      {}
+      {data.length > 0 && (
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h3 className="text-xl font-bold text-gray-900 mb-4">
+            🗺️ Interactive World Happiness Map ({selectedYear})
+          </h3>
+          
+          <div className="h-96 mb-4">
+            <Plot
+              data={[{
+                type: 'choropleth',
+                locations: data.filter(country => country.countryCode).map(country => country.countryCode!),
+                z: data.filter(country => country.countryCode).map(country => country.happinessScore),
+                text: data.filter(country => country.countryCode).map(country => `${country.country}<br>Happiness Score: ${country.happinessScore.toFixed(2)}<br>Rank: #${country.rank}<br>Region: ${country.region}`),
+                hovertemplate: '%{text}<extra></extra>',
+                colorscale: [
+                  [0, '#ef4444'],    
+                  [0.25, '#f97316'], 
+                  [0.5, '#eab308'],  
+                  [0.75, '#22c55e'], 
+                  [1, '#16a34a']     
+                ],
+                zmin: 2,
+                zmax: 8,
+                colorbar: {
+                  title: {
+                    text: 'Happiness Score',
+                    font: { size: 14 }
+                  },
+                  thickness: 15,
+                  len: 0.8,
+                  x: 1.02
+                }
+              }]}
+              layout={{
+                title: {
+                  text: `World Happiness Distribution ${selectedYear}`,
+                  font: { size: 18 },
+                  x: 0.5
+                },
+                geo: {
+                  showframe: false,
+                  showcoastlines: true,
+                  projection: { type: 'natural earth' },
+                  bgcolor: '#f8fafc',
+                  coastlinecolor: '#64748b',
+                  showland: true,
+                  landcolor: '#f1f5f9',
+                  showocean: true,
+                  oceancolor: '#e2e8f0'
+                },
+                autosize: true,
+                margin: { l: 0, r: 60, t: 60, b: 0 },
+                hoverlabel: {
+                  bgcolor: 'white',
+                  bordercolor: '#d1d5db',
+                  font: { size: 12 }
+                }
+              }}
+              config={{ 
+                responsive: true, 
+                displayModeBar: false,
+                showTips: false
+              }}
+              style={{ width: '100%', height: '100%' }}
+            />
+          </div>
+          
+          {}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+            <div className="bg-green-50 p-4 rounded-lg">
+              <p className="text-sm text-green-600 font-medium">Happiest Country</p>
+              <p className="text-lg font-bold text-green-900">{data[0]?.country}</p>
+              <p className="text-sm text-green-600">{data[0]?.happinessScore.toFixed(2)}</p>
+            </div>
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <p className="text-sm text-blue-600 font-medium">Global Average</p>
+              <p className="text-2xl font-bold text-blue-900">
+                {(data.reduce((sum, c) => sum + c.happinessScore, 0) / data.length).toFixed(2)}
+              </p>
+            </div>
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <p className="text-sm text-yellow-600 font-medium">Countries Analyzed</p>
+              <p className="text-2xl font-bold text-yellow-900">{data.length}</p>
+            </div>
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <p className="text-sm text-purple-600 font-medium">Happiness Range</p>
+              <p className="text-lg font-bold text-purple-900">
+                {Math.min(...data.map(c => c.happinessScore)).toFixed(1)} - {Math.max(...data.map(c => c.happinessScore)).toFixed(1)}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {}
       {loading && (
         <div className="bg-white rounded-lg shadow-lg p-6 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -134,14 +277,14 @@ const WorldMap = () => {
         </div>
       )}
 
-      {/* Error Message */}
+      {}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-600">❌ {error}</p>
         </div>
       )}
 
-      {/* Top 10 Countries */}
+      {}
       {data.length > 0 && (
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-4">
@@ -173,7 +316,7 @@ const WorldMap = () => {
         </div>
       )}
 
-      {/* Regional Overview */}
+      {}
       {Object.keys(groupedByRegion).length > 0 && (
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-4">
@@ -208,15 +351,6 @@ const WorldMap = () => {
           </div>
         </div>
       )}
-
-      {/* Note about map visualization */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-semibold text-blue-900 mb-2">📍 Map Visualization Note</h4>
-        <p className="text-blue-800 text-sm">
-          Interactive world map visualization would be displayed here using libraries like react-simple-maps or Leaflet. 
-          For now, the data is presented in ranked lists and regional summaries above.
-        </p>
-      </div>
     </div>
   );
 };

@@ -34,19 +34,16 @@ const IndiaDashboard = () => {
       const result = await response.json();
       
       if (result.data && result.data.correlations) {
-        // Transform correlation data
         const correlationData = result.data.correlations.map((item: any) => ({
           indicator: item.factorCode,
           correlation: item.correlation,
           indicatorName: getIndicatorName(item.factorCode)
         }));
 
-        // Sort by absolute correlation value
         correlationData.sort((a: CorrelationData, b: CorrelationData) => Math.abs(b.correlation) - Math.abs(a.correlation));
         
         setData(correlationData);
 
-        // Generate insights
         const topPositive = correlationData.filter((d: CorrelationData) => d.correlation > 0).slice(0, 2);
         const topNegative = correlationData.filter((d: CorrelationData) => d.correlation < 0).slice(0, 2);
         const strongCorrelations = correlationData.filter((d: CorrelationData) => Math.abs(d.correlation) > 0.7);
@@ -73,7 +70,6 @@ const IndiaDashboard = () => {
 
   const getIndicatorName = (indicator: string) => {
     const indicatorMap: Record<string, string> = {
-      // Original indicator codes
       'NY.GDP.PCAP.CD': 'GDP per capita',
       'SP.POP.TOTL': 'Population',
       'SH.XPD.CHEX.GD.ZS': 'Health expenditure (% of GDP)',
@@ -84,7 +80,6 @@ const IndiaDashboard = () => {
       'SP.URB.TOTL.IN.ZS': 'Urban population (%)',
       'EN.ATM.CO2E.PC': 'CO2 emissions (metric tons per capita)',
       'SL.UEM.TOTL.ZS': 'Unemployment rate',
-      // Factor codes from happiness analysis
       'gdpPerCapita': 'GDP per capita',
       'socialSupport': 'Social support',
       'healthyLifeExpectancy': 'Healthy life expectancy',
@@ -95,13 +90,11 @@ const IndiaDashboard = () => {
     return indicatorMap[indicator] || indicator;
   };
 
-  // Show all correlations (no filtering by positive/negative)
-  const allCorrelations = data.slice(0, 10); // Show top 10 correlations by absolute value
+  const allCorrelations = data.slice(0, 10);
 
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-lg p-6">
-        {/* Updated to show all correlations */}
         <h2 className="text-2xl font-bold text-gray-900 mb-6">🇮🇳 India-Specific Correlation Dashboard</h2>
         
         <div className="flex items-center justify-between mb-6">
@@ -118,7 +111,7 @@ const IndiaDashboard = () => {
         </div>
       </div>
 
-      {/* Loading */}
+      {}
       {loading && (
         <div className="bg-white rounded-lg shadow-lg p-6 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -126,14 +119,14 @@ const IndiaDashboard = () => {
         </div>
       )}
 
-      {/* Error Message */}
+      {}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-600">❌ {error}</p>
         </div>
       )}
 
-      {/* Insights */}
+      {}
       {insights.length > 0 && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-green-900 mb-4">📊 Key Insights</h3>
@@ -148,7 +141,7 @@ const IndiaDashboard = () => {
         </div>
       )}
 
-      {/* All Correlations Chart */}
+      {}
       {allCorrelations.length > 0 && (
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-4">
@@ -210,7 +203,7 @@ const IndiaDashboard = () => {
             />
           </div>
           
-          {/* Correlation Table */}
+          {}
           <div className="mt-6">
             <h4 className="text-lg font-semibold text-gray-900 mb-4">📋 Detailed Correlation Values</h4>
             <div className="overflow-x-auto">
@@ -269,7 +262,7 @@ const IndiaDashboard = () => {
         </div>
       )}
 
-      {/* Detailed Correlation Table */}
+      {}
       {data.length > 0 && (
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-4">

@@ -4,18 +4,13 @@ const path = require('path');
 const fs = require('fs');
 
 class HappinessService {
-  constructor() {
-    // Path to the official World Happiness Report Excel file
+  constructor() {
     this.excelFilePath = path.join(__dirname, '..', 'Happiness_index.xlsx');
     this.happinessData = null;
     this.lastFetch = null;
-    this.cacheDuration = 24 * 60 * 60 * 1000; // 24 hours
+    this.cacheDuration = 24 * 60 * 60 * 1000; 
   }
 
-  /**
-   * Load happiness data from the official Excel file
-   * @returns {Promise<Array>} Processed happiness data
-   */
   async loadHappinessData() {
     if (this.happinessData && this.lastFetch && 
         (Date.now() - this.lastFetch) < this.cacheDuration) {
@@ -23,19 +18,13 @@ class HappinessService {
     }
 
     try {
-      console.log('Loading happiness data from official Excel file...');
-      
-      // Check if the Excel file exists
+      console.log('Loading happiness data from official Excel file...');
       if (!fs.existsSync(this.excelFilePath)) {
         throw new Error(`Excel file not found at ${this.excelFilePath}`);
-      }
-      
-      // Read the Excel file
+      }
       const workbook = XLSX.readFile(this.excelFilePath);
-      const worksheetName = workbook.SheetNames[0]; // Use first sheet
-      const worksheet = workbook.Sheets[worksheetName];
-      
-      // Convert to JSON
+      const worksheetName = workbook.SheetNames[0]; 
+      const worksheet = workbook.Sheets[worksheetName];
       const rawData = XLSX.utils.sheet_to_json(worksheet);
       
       console.log(`Read ${rawData.length} rows from Excel file`);
@@ -47,8 +36,7 @@ class HappinessService {
       console.log(`Processed ${this.happinessData.length} happiness records`);
       return this.happinessData;
     } catch (error) {
-      console.error('Error loading happiness data from Excel:', error.message);
-      // Fallback to sample data if Excel loading fails
+      console.error('Error loading happiness data from Excel:', error.message);
       console.log('Using fallback sample data...');
       const sampleData = await this.generateSampleHappinessData();
       this.happinessData = this.processHappinessData(sampleData);
@@ -57,22 +45,14 @@ class HappinessService {
     }
   }
 
-  /**
-   * Fetch data from the official World Happiness Report API
-   * @returns {Promise<Array>} Raw happiness data
-   */
   async fetchFromOfficialAPI() {
-    try {
-      // The World Happiness Report site uses GraphQL/REST API
-      // We'll try to get the data structure they use
+    try {
       const response = await axios.get(this.worldHappinessAPI, {
         timeout: 10000,
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-      });
-
-      // If the response is HTML, we need to extract the data differently
+      });
       if (response.headers['content-type']?.includes('text/html')) {
         throw new Error('Received HTML instead of JSON data');
       }
@@ -83,10 +63,6 @@ class HappinessService {
     }
   }
 
-  /**
-   * Fetch data from CSV source as fallback
-   * @returns {Promise<Array>} Parsed CSV data
-   */
   async fetchFromCSVSource() {
     try {
       const response = await axios.get(this.happinessDataCSV, {
@@ -102,11 +78,6 @@ class HappinessService {
     }
   }
 
-  /**
-   * Parse CSV data into structured format
-   * @param {string} csvData - Raw CSV string
-   * @returns {Array} Parsed data array
-   */
   parseCSVData(csvData) {
     const lines = csvData.split('\n');
     const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
@@ -128,11 +99,6 @@ class HappinessService {
     return data;
   }
 
-  /**
-   * Parse a CSV line handling quoted values
-   * @param {string} line - CSV line
-   * @returns {Array} Parsed values
-   */
   parseCSVLine(line) {
     const result = [];
     let current = '';
@@ -153,12 +119,7 @@ class HappinessService {
     return result;
   }
 
-  /**
-   * Generate sample happiness data for demonstration
-   * In production, this would fetch from actual World Happiness Report
-   */
-  async generateSampleHappinessData() {
-    // Sample data based on World Happiness Report structure
+  async generateSampleHappinessData() {
     const countries = [
       { code: 'DNK', name: 'Denmark', region: 'Western Europe' },
       { code: 'CHE', name: 'Switzerland', region: 'Western Europe' },
@@ -181,8 +142,7 @@ class HappinessService {
     const data = [];
 
     countries.forEach(country => {
-      years.forEach(year => {
-        // Generate realistic happiness scores with some variation
+      years.forEach(year => {
         let baseScore;
         switch (country.region) {
           case 'Western Europe':
@@ -202,9 +162,7 @@ class HappinessService {
             break;
           default:
             baseScore = 4.5 + Math.random() * 1.5;
-        }
-
-        // Add year-based variation (slight decline during COVID)
+        }
         if (year === 2020 || year === 2021) {
           baseScore -= 0.1 + Math.random() * 0.2;
         }
@@ -215,7 +173,7 @@ class HappinessService {
           region: country.region,
           year: year,
           happinessScore: Math.round(baseScore * 100) / 100,
-          gdpPerCapita: 8 + Math.random() * 4, // Log GDP per capita
+          gdpPerCapita: 8 + Math.random() * 4, 
           socialSupport: 0.7 + Math.random() * 0.3,
           healthyLifeExpectancy: 60 + Math.random() * 20,
           freedomToMakeLifeChoices: 0.6 + Math.random() * 0.4,
@@ -228,14 +186,8 @@ class HappinessService {
     return data;
   }
 
-  /**
-   * Process and clean happiness data from various sources
-   * @param {Array} rawData - Raw happiness data
-   * @returns {Array} Processed data
-   */
   processHappinessData(rawData) {
-    return rawData.map(item => {
-      // Handle different data source formats
+    return rawData.map(item => {
       const countryCode = item.countryCode || item.iso3 || item.ISO3 || item.Code || '';
       const country = item.country || item.Country || item.Entity || '';
       const year = parseInt(item.year || item.Year || new Date().getFullYear());
@@ -256,34 +208,22 @@ class HappinessService {
     }).filter(item => item.country && item.happinessScore > 0);
   }
 
-  /**
-   * Process Excel happiness data from the official World Happiness Report
-   * @param {Array} rawData - Raw data from Excel file
-   * @returns {Array} Processed data array
-   */
   processExcelHappinessData(rawData) {
     console.log('Processing Excel data. Column names:', Object.keys(rawData[0] || {}));
     
     return rawData
       .filter(row => row && Object.keys(row).length > 0)
-      .map(row => {
-        // Map Excel columns to our data structure
-        // The Excel file from World Happiness Report typically has these columns:
-        // Looking at the sample: Year, Rank, Country name, Ladder score, etc.
+      .map(row => {
         
         const countryName = row['Country name'] || row['Country'] || row['country'] || '';
         const year = parseInt(row['Year'] || row['year'] || 2024);
-        const happinessScore = parseFloat(row['Ladder score'] || row['Life Ladder'] || row['Happiness Score'] || row['happiness'] || 0);
-        
-        // Extract other happiness factors from the "Explained by:" columns
+        const happinessScore = parseFloat(row['Ladder score'] || row['Life Ladder'] || row['Happiness Score'] || row['happiness'] || 0);
         const gdpPerCapita = parseFloat(row['Explained by: Log GDP per capita'] || row['Log GDP per capita'] || row['GDP per capita'] || 0);
         const socialSupport = parseFloat(row['Explained by: Social support'] || row['Social support'] || row['Family'] || 0);
         const healthyLifeExpectancy = parseFloat(row['Explained by: Healthy life expectancy'] || row['Healthy life expectancy at birth'] || row['Health'] || 0);
         const freedom = parseFloat(row['Explained by: Freedom to make life choices'] || row['Freedom to make life choices'] || row['Freedom'] || 0);
         const generosity = parseFloat(row['Explained by: Generosity'] || row['Generosity'] || 0);
-        const corruption = parseFloat(row['Explained by: Perceptions of corruption'] || row['Perceptions of corruption'] || row['Corruption'] || 0);
-        
-        // Get country code and region
+        const corruption = parseFloat(row['Explained by: Perceptions of corruption'] || row['Perceptions of corruption'] || row['Corruption'] || 0);
         const countryCode = this.getCountryCode(countryName);
         const region = this.getRegionByCountry(countryCode) || this.getRegionByCountryName(countryName);
         
@@ -301,15 +241,10 @@ class HappinessService {
           perceptionsOfCorruption: corruption
         };
       })
-      .filter(item => item.country && item.happinessScore > 0) // Filter out invalid entries
-      .sort((a, b) => b.year - a.year || b.happinessScore - a.happinessScore); // Sort by year desc, then happiness desc
+      .filter(item => item.country && item.happinessScore > 0) 
+      .sort((a, b) => b.year - a.year || b.happinessScore - a.happinessScore); 
   }
 
-  /**
-   * Get country code from country name
-   * @param {string} countryName - Full country name
-   * @returns {string} ISO3 country code
-   */
   getCountryCode(countryName) {
     const countryMap = {
       'Denmark': 'DNK', 'Switzerland': 'CHE', 'Iceland': 'ISL', 'Norway': 'NOR', 
@@ -364,14 +299,8 @@ class HappinessService {
     return countryMap[countryName] || countryName.substring(0, 3).toUpperCase();
   }
 
-  /**
-   * Get region by country name for countries not in the code map
-   * @param {string} countryName - Full country name
-   * @returns {string} Region name
-   */
   getRegionByCountryName(countryName) {
-    const regionMap = {
-      // Western Europe
+    const regionMap = {
       'Denmark': 'Western Europe',
       'Switzerland': 'Western Europe',
       'Iceland': 'Western Europe',
@@ -388,58 +317,40 @@ class HappinessService {
       'Austria': 'Western Europe',
       'Belgium': 'Western Europe',
       'Ireland': 'Western Europe',
-      'Luxembourg': 'Western Europe',
-      
-      // North America
+      'Luxembourg': 'Western Europe',
       'United States': 'North America',
-      'Canada': 'North America',
-      
-      // East Asia
+      'Canada': 'North America',
       'China': 'East Asia',
       'Japan': 'East Asia',
       'South Korea': 'East Asia',
-      'Singapore': 'East Asia',
-      
-      // South Asia
+      'Singapore': 'East Asia',
       'India': 'South Asia',
       'Pakistan': 'South Asia',
       'Bangladesh': 'South Asia',
-      'Sri Lanka': 'South Asia',
-      
-      // Latin America
+      'Sri Lanka': 'South Asia',
       'Brazil': 'Latin America and Caribbean',
       'Mexico': 'Latin America and Caribbean',
       'Argentina': 'Latin America and Caribbean',
       'Chile': 'Latin America and Caribbean',
       'Colombia': 'Latin America and Caribbean',
-      'Peru': 'Latin America and Caribbean',
-      
-      // Sub-Saharan Africa
+      'Peru': 'Latin America and Caribbean',
       'South Africa': 'Sub-Saharan Africa',
       'Nigeria': 'Sub-Saharan Africa',
       'Ghana': 'Sub-Saharan Africa',
       'Kenya': 'Sub-Saharan Africa',
-      'Ethiopia': 'Sub-Saharan Africa',
-      
-      // Middle East and North Africa
+      'Ethiopia': 'Sub-Saharan Africa',
       'Egypt': 'Middle East and North Africa',
       'Morocco': 'Middle East and North Africa',
       'Algeria': 'Middle East and North Africa',
       'Tunisia': 'Middle East and North Africa',
       'Turkey': 'Middle East and North Africa',
-      'Israel': 'Middle East and North Africa',
-      
-      // Southeast Asia
+      'Israel': 'Middle East and North Africa',
       'Thailand': 'Southeast Asia',
       'Malaysia': 'Southeast Asia',
       'Indonesia': 'Southeast Asia',
       'Philippines': 'Southeast Asia',
-      'Vietnam': 'Southeast Asia',
-      
-      // Commonwealth of Independent States
-      'Russia': 'Commonwealth of Independent States',
-      
-      // Central and Eastern Europe
+      'Vietnam': 'Southeast Asia',
+      'Russia': 'Commonwealth of Independent States',
       'Poland': 'Central and Eastern Europe',
       'Czech Republic': 'Central and Eastern Europe',
       'Hungary': 'Central and Eastern Europe',
@@ -455,52 +366,28 @@ class HappinessService {
     return regionMap[countryName] || 'Other';
   }
 
-  /**
-   * Get region by country code
-   * @param {string} countryCode - ISO3 country code
-   * @returns {string} Region name
-   */
   getRegionByCountry(countryCode) {
-    const regionMap = {
-      // Western Europe
+    const regionMap = {
       'DNK': 'Western Europe', 'CHE': 'Western Europe', 'ISL': 'Western Europe',
       'NOR': 'Western Europe', 'NLD': 'Western Europe', 'SWE': 'Western Europe',
       'GBR': 'Western Europe', 'DEU': 'Western Europe', 'FRA': 'Western Europe',
       'ITA': 'Western Europe', 'ESP': 'Western Europe', 'PRT': 'Western Europe',
       'FIN': 'Western Europe', 'AUT': 'Western Europe', 'BEL': 'Western Europe',
-      'IRL': 'Western Europe', 'LUX': 'Western Europe',
-      
-      // North America
-      'USA': 'North America', 'CAN': 'North America',
-      
-      // East Asia
-      'CHN': 'East Asia', 'JPN': 'East Asia', 'KOR': 'East Asia', 'SGP': 'East Asia',
-      
-      // South Asia
-      'IND': 'South Asia', 'PAK': 'South Asia', 'BGD': 'South Asia', 'LKA': 'South Asia',
-      
-      // Latin America and Caribbean
+      'IRL': 'Western Europe', 'LUX': 'Western Europe',
+      'USA': 'North America', 'CAN': 'North America',
+      'CHN': 'East Asia', 'JPN': 'East Asia', 'KOR': 'East Asia', 'SGP': 'East Asia',
+      'IND': 'South Asia', 'PAK': 'South Asia', 'BGD': 'South Asia', 'LKA': 'South Asia',
       'BRA': 'Latin America and Caribbean', 'MEX': 'Latin America and Caribbean',
       'ARG': 'Latin America and Caribbean', 'CHL': 'Latin America and Caribbean',
-      'COL': 'Latin America and Caribbean', 'PER': 'Latin America and Caribbean',
-      
-      // Sub-Saharan Africa
+      'COL': 'Latin America and Caribbean', 'PER': 'Latin America and Caribbean',
       'ZAF': 'Sub-Saharan Africa', 'NGA': 'Sub-Saharan Africa', 'GHA': 'Sub-Saharan Africa',
-      'KEN': 'Sub-Saharan Africa', 'ETH': 'Sub-Saharan Africa',
-      
-      // Middle East and North Africa
+      'KEN': 'Sub-Saharan Africa', 'ETH': 'Sub-Saharan Africa',
       'EGY': 'Middle East and North Africa', 'MAR': 'Middle East and North Africa',
       'DZA': 'Middle East and North Africa', 'TUN': 'Middle East and North Africa',
-      'TUR': 'Middle East and North Africa', 'ISR': 'Middle East and North Africa',
-      
-      // Southeast Asia
+      'TUR': 'Middle East and North Africa', 'ISR': 'Middle East and North Africa',
       'THA': 'Southeast Asia', 'MYS': 'Southeast Asia', 'IDN': 'Southeast Asia',
-      'PHL': 'Southeast Asia', 'VNM': 'Southeast Asia',
-      
-      // Commonwealth of Independent States
-      'RUS': 'Commonwealth of Independent States',
-      
-      // Central and Eastern Europe
+      'PHL': 'Southeast Asia', 'VNM': 'Southeast Asia',
+      'RUS': 'Commonwealth of Independent States',
       'POL': 'Central and Eastern Europe', 'CZE': 'Central and Eastern Europe',
       'HUN': 'Central and Eastern Europe', 'SVK': 'Central and Eastern Europe',
       'SVN': 'Central and Eastern Europe', 'EST': 'Central and Eastern Europe',
@@ -511,13 +398,6 @@ class HappinessService {
     return regionMap[countryCode] || 'Other';
   }
 
-  /**
-   * Get happiness data for a specific country and date range
-   * @param {string} countryCode - ISO 3-letter country code
-   * @param {number} startYear - Start year
-   * @param {number} endYear - End year
-   * @returns {Promise<Array>} Filtered happiness data
-   */
   async getHappinessData(countryCode, startYear, endYear) {
     const data = await this.loadHappinessData();
     
@@ -530,11 +410,6 @@ class HappinessService {
       .sort((a, b) => a.year - b.year);
   }
 
-  /**
-   * Get happiness data for all countries for a specific year
-   * @param {number} year - Year to get data for
-   * @returns {Promise<Array>} Global happiness data
-   */
   async getGlobalHappinessData(year) {
     const data = await this.loadHappinessData();
     
@@ -543,11 +418,6 @@ class HappinessService {
       .sort((a, b) => b.happinessScore - a.happinessScore);
   }
 
-  /**
-   * Get countries by region
-   * @param {string} region - Region name
-   * @returns {Promise<Array>} Countries in the region
-   */
   async getCountriesByRegion(region) {
     const data = await this.loadHappinessData();
     
@@ -567,10 +437,6 @@ class HappinessService {
     return Array.from(uniqueCountries.values());
   }
 
-  /**
-   * Calculate correlation between happiness and other factors for India
-   * @returns {Promise<Object>} Correlation analysis for India
-   */
   async getIndiaCorrelationAnalysis() {
     const data = await this.loadHappinessData();
     const indiaData = data.filter(item => item.countryCode === 'IND');
@@ -609,12 +475,6 @@ class HappinessService {
     };
   }
 
-  /**
-   * Calculate Pearson correlation coefficient
-   * @param {Array} x - First variable array
-   * @param {Array} y - Second variable array
-   * @returns {number} Correlation coefficient
-   */
   calculateCorrelation(x, y) {
     if (x.length !== y.length || x.length === 0) return 0;
     

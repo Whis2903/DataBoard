@@ -9,7 +9,6 @@ interface IndicatorData {
 }
 
 const IndicatorTrends = () => {
-  // Updated to compare two countries on a single indicator
   const [selectedCountry1, setSelectedCountry1] = useState('IND');
   const [selectedCountry2, setSelectedCountry2] = useState('USA');
   const [selectedIndicator, setSelectedIndicator] = useState('NY.GDP.MKTP.CD');
@@ -19,7 +18,6 @@ const IndicatorTrends = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Updated with better error handling
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
   const availableIndicators = [
@@ -37,7 +35,6 @@ const IndicatorTrends = () => {
     setData([]);
 
     try {
-      // Fetch data for the selected indicator for both countries
       const countryPromises = [selectedCountry1, selectedCountry2].map(async (country) => {
         try {
           const response = await fetch(
@@ -56,11 +53,9 @@ const IndicatorTrends = () => {
 
       const results = await Promise.all(countryPromises);
       
-      // Combine data by year
       const combinedData: IndicatorData[] = [];
       const yearSet = new Set<number>();
 
-      // Collect all years
       results.forEach(({ data: countryData }) => {
         countryData.forEach((item: any) => {
           if (item.value !== null) {
@@ -69,7 +64,6 @@ const IndicatorTrends = () => {
         });
       });
 
-      // Create data structure
       Array.from(yearSet).sort().forEach(year => {
         const yearData: IndicatorData = { year };
         
@@ -101,7 +95,7 @@ const IndicatorTrends = () => {
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* First Country Selection */}
+            {}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Country 1
@@ -122,7 +116,7 @@ const IndicatorTrends = () => {
               </select>
             </div>
 
-            {/* Second Country Selection */}
+            {}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Country 2
@@ -143,7 +137,7 @@ const IndicatorTrends = () => {
               </select>
             </div>
 
-            {/* Indicator Selection */}
+            {}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Indicator
@@ -161,7 +155,7 @@ const IndicatorTrends = () => {
               </select>
             </div>
 
-            {/* Start Year */}
+            {}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Start Year
@@ -176,7 +170,7 @@ const IndicatorTrends = () => {
               />
             </div>
 
-            {/* End Year */}
+            {}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 End Year
@@ -191,7 +185,7 @@ const IndicatorTrends = () => {
               />
             </div>
 
-            {/* Submit Button */}
+            {}
             <div className="flex items-end">
               <button
                 type="submit"
@@ -205,14 +199,14 @@ const IndicatorTrends = () => {
         </form>
       </div>
 
-      {/* Error Message */}
+      {}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-600">❌ {error}</p>
         </div>
       )}
 
-      {/* Chart */}
+      {}
       {data.length > 0 && (
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-4">
@@ -258,7 +252,7 @@ const IndicatorTrends = () => {
             />
           </div>
 
-          {/* Country Statistics */}
+          {}
           <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             {[selectedCountry1, selectedCountry2].map((country, index) => {
               const countryData = data.filter(item => item[country] !== undefined).map(item => item[country]);

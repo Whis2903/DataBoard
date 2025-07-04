@@ -2,10 +2,6 @@ const express = require('express');
 const router = express.Router();
 const worldBankService = require('../services/worldbank');
 
-/**
- * GET /api/indicator/:country/:indicator?start=:startYear&end=:endYear
- * Get World Bank indicator data for a specific country
- */
 router.get('/:country/:indicator', async (req, res) => {
   try {
     const { country, indicator } = req.params;
@@ -61,10 +57,6 @@ router.get('/:country/:indicator', async (req, res) => {
   }
 });
 
-/**
- * GET /api/indicator/compare/:indicator/:year
- * Compare multiple countries for a specific indicator and year
- */
 router.post('/compare/:indicator/:year', async (req, res) => {
   try {
     const { indicator, year } = req.params;
@@ -124,10 +116,6 @@ router.post('/compare/:indicator/:year', async (req, res) => {
   }
 });
 
-/**
- * GET /api/indicator/list
- * Get list of available World Bank indicators
- */
 router.get('/list', async (req, res) => {
   try {
     const { topic } = req.query;
@@ -162,10 +150,6 @@ router.get('/list', async (req, res) => {
   }
 });
 
-/**
- * GET /api/indicator/popular
- * Get commonly used indicators for the dashboard
- */
 router.get('/popular', async (req, res) => {
   try {
     const cacheKey = 'indicators_popular';
@@ -232,7 +216,7 @@ router.get('/popular', async (req, res) => {
       }
     ];
 
-    req.cache.set(cacheKey, popularIndicators, 86400); // Cache for 24 hours
+    req.cache.set(cacheKey, popularIndicators, 86400); 
     
     res.json({
       data: popularIndicators,
