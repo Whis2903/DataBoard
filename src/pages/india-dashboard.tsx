@@ -1,7 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { toast } from 'react-hot-toast';
+import { 
+  ChartBarIcon, 
+  ArrowTrendingUpIcon, 
+  ArrowTrendingDownIcon,
+  AcademicCapIcon,
+  HeartIcon,
+  CurrencyDollarIcon,
+  BuildingLibraryIcon
+} from '@heroicons/react/24/outline';
 import Plot from '../components/Charts';
+import Card from '../components/Card';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 interface CorrelationData {
   indicator: string;
@@ -59,9 +72,11 @@ const IndiaDashboard = () => {
         ];
         
         setInsights(generatedInsights);
+        toast.success('India analysis completed successfully!');
       }
     } catch (err) {
       setError('Failed to fetch India correlation analysis');
+      toast.error('Failed to load India analysis');
       console.error(err);
     } finally {
       setLoading(false);
@@ -90,236 +105,270 @@ const IndiaDashboard = () => {
     return indicatorMap[indicator] || indicator;
   };
 
+  const getCorrelationIcon = (indicator: string) => {
+    if (indicator.includes('GDP') || indicator.includes('gdpPerCapita')) return CurrencyDollarIcon;
+    if (indicator.includes('Health') || indicator.includes('health')) return HeartIcon;
+    if (indicator.includes('Education') || indicator.includes('literacy')) return AcademicCapIcon;
+    return ChartBarIcon;
+  };
+
+  const getCorrelationStrength = (correlation: number) => {
+    const abs = Math.abs(correlation);
+    if (abs >= 0.8) return { label: 'Very Strong', color: 'text-purple-400' };
+    if (abs >= 0.6) return { label: 'Strong', color: 'text-blue-400' };
+    if (abs >= 0.4) return { label: 'Moderate', color: 'text-yellow-400' };
+    if (abs >= 0.2) return { label: 'Weak', color: 'text-orange-400' };
+    return { label: 'Very Weak', color: 'text-red-400' };
+  };
+
   const allCorrelations = data.slice(0, 10);
+  const positiveCorrelations = data.filter(d => d.correlation > 0);
+  const negativeCorrelations = data.filter(d => d.correlation < 0);
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">🇮🇳 India-Specific Correlation Dashboard</h2>
-        
+    <div className="space-y-8">
+      <Card className="shadow-xl">
         <div className="flex items-center justify-between mb-6">
-          <p className="text-gray-600">
-            Analyzing correlations between happiness and various economic/social indicators for India
-          </p>
-          <button
+          <div>
+            <h2 className="text-3xl font-bold text-slate-100 flex items-center gap-3">
+              <BuildingLibraryIcon className="w-8 h-8 text-orange-400" />
+              🇮🇳 India Happiness Analysis
+            </h2>
+            <p className="text-slate-400 mt-2">
+              Deep dive into factors influencing happiness in India
+            </p>
+          </div>
+          
+          <motion.button
             onClick={handleAnalysis}
             disabled={loading}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-red-600 disabled:opacity-50 transition-all duration-200 shadow-lg shadow-orange-500/25"
           >
-            {loading ? 'Analyzing...' : 'Refresh Analysis'}
-          </button>
+            {loading ? (
+              <>
+                <LoadingSpinner size="sm" />
+                Analyzing...
+              </>
+            ) : (
+              'Refresh Analysis'
+            )}
+          </motion.button>
         </div>
-      </div>
 
-      {}
-      {loading && (
-        <div className="bg-white rounded-lg shadow-lg p-6 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Analyzing correlations for India...</p>
-        </div>
-      )}
-
-      {}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-600">❌ {error}</p>
-        </div>
-      )}
-
-      {}
-      {insights.length > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-green-900 mb-4">📊 Key Insights</h3>
-          <ul className="space-y-2">
-            {insights.map((insight, index) => (
-              <li key={index} className="text-green-800 flex items-start">
-                <span className="text-green-600 mr-2">•</span>
-                {insight}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {}
-      {allCorrelations.length > 0 && (
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">
-            � All Correlations with Happiness (Ranked by Strength)
-          </h3>
-          
-          <div className="h-96">
-            <Plot
-              data={[{
-                x: allCorrelations.map((item: CorrelationData) => item.correlation),
-                y: allCorrelations.map((item: CorrelationData) => item.indicatorName),
-                type: 'bar',
-                orientation: 'h',
-                marker: { 
-                  color: allCorrelations.map((item: CorrelationData) => 
-                    item.correlation > 0 ? '#10b981' : '#ef4444'
-                  ),
-                  line: { width: 1, color: '#374151' }
-                },
-                text: allCorrelations.map((item: CorrelationData) => item.correlation.toFixed(3)),
-                textposition: 'outside',
-                textfont: { size: 12, color: '#374151' },
-                name: 'Correlations'
-              }]}
-              layout={{
-                title: {
-                  text: 'All Factor Correlations with Happiness in India',
-                  font: { size: 16 }
-                },
-                xaxis: { 
-                  title: { text: 'Correlation Coefficient' },
-                  range: [-1, 1],
-                  zeroline: true,
-                  zerolinewidth: 2,
-                  zerolinecolor: '#6b7280'
-                },
-                yaxis: { 
-                  title: { text: 'Factors' },
-                  automargin: true
-                },
-                autosize: true,
-                margin: { l: 200, r: 100, t: 80, b: 60 },
-                showlegend: false,
-                annotations: [
-                  {
-                    x: 0.5,
-                    y: -0.15,
-                    xref: 'paper',
-                    yref: 'paper',
-                    text: 'Green = Positive Correlation | Red = Negative Correlation',
-                    showarrow: false,
-                    font: { size: 12, color: '#6b7280' },
-                    xanchor: 'center'
-                  }
-                ]
-              }}
-              config={{ responsive: true, displayModeBar: false }}
-              style={{ width: '100%', height: '100%' }}
-            />
-          </div>
-          
-          {}
-          <div className="mt-6">
-            <h4 className="text-lg font-semibold text-gray-900 mb-4">📋 Detailed Correlation Values</h4>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Rank
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Factor
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Correlation
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Strength
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Direction
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {allCorrelations.map((item: CorrelationData, index: number) => (
-                    <tr key={item.indicator} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        #{index + 1}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {item.indicatorName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
-                        <span className={`${item.correlation > 0 ? 'text-green-600' : 'text-red-600'} font-semibold`}>
-                          {item.correlation.toFixed(3)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {Math.abs(item.correlation) > 0.7 ? 'Strong' : 
-                         Math.abs(item.correlation) > 0.5 ? 'Moderate' : 
-                         Math.abs(item.correlation) > 0.3 ? 'Weak' : 'Very Weak'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          item.correlation > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                          {item.correlation > 0 ? '↗ Positive' : '↘ Negative'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        {data.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-slate-900/30 rounded-xl">
+              <div className="text-2xl font-bold text-blue-400">{data.length}</div>
+              <div className="text-sm text-slate-400">Total Factors</div>
+            </div>
+            <div className="text-center p-4 bg-slate-900/30 rounded-xl">
+              <div className="text-2xl font-bold text-green-400">{positiveCorrelations.length}</div>
+              <div className="text-sm text-slate-400">Positive</div>
+            </div>
+            <div className="text-center p-4 bg-slate-900/30 rounded-xl">
+              <div className="text-2xl font-bold text-red-400">{negativeCorrelations.length}</div>
+              <div className="text-sm text-slate-400">Negative</div>
+            </div>
+            <div className="text-center p-4 bg-slate-900/30 rounded-xl">
+              <div className="text-2xl font-bold text-purple-400">
+                {data.filter(d => Math.abs(d.correlation) > 0.7).length}
+              </div>
+              <div className="text-sm text-slate-400">Strong (|r| &gt; 0.7)</div>
             </div>
           </div>
+        )}
+      </Card>
+
+      {loading && (
+        <Card className="h-64 flex items-center justify-center">
+          <LoadingSpinner size="lg" text="Analyzing India's happiness factors..." />
+        </Card>
+      )}
+
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl"
+        >
+          <p className="text-red-400 flex items-center gap-2">
+            ❌ {error}
+          </p>
+        </motion.div>
+      )}
+
+      {allCorrelations.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <Card 
+            title="Correlation Analysis"
+            subtitle="Top 10 factors and their correlation with happiness"
+            className="shadow-xl"
+          >
+            <div className="h-96 bg-slate-900/30 rounded-xl p-4">
+              <Plot
+                data={[{
+                  x: allCorrelations.map(d => d.correlation),
+                  y: allCorrelations.map(d => d.indicatorName),
+                  type: 'bar',
+                  orientation: 'h',
+                  marker: {
+                    color: allCorrelations.map(d => 
+                      d.correlation > 0 ? '#10b981' : '#ef4444'
+                    ),
+                    line: {
+                      color: '#1e293b',
+                      width: 1
+                    }
+                  },
+                  text: allCorrelations.map(d => d.correlation.toFixed(3)),
+                  textposition: 'auto',
+                  hovertemplate: '%{y}<br>Correlation: %{x:.3f}<extra></extra>'
+                }]}
+                layout={{
+                  title: {
+                    text: '',
+                    font: { color: '#f8fafc' }
+                  },
+                  paper_bgcolor: 'rgba(0,0,0,0)',
+                  plot_bgcolor: 'rgba(0,0,0,0)',
+                  xaxis: {
+                    title: { text: 'Correlation Coefficient', font: { color: '#94a3b8' } },
+                    color: '#94a3b8',
+                    gridcolor: '#334155',
+                    range: [-1, 1]
+                  },
+                  yaxis: {
+                    title: { text: '', font: { color: '#94a3b8' } },
+                    color: '#94a3b8',
+                    gridcolor: '#334155'
+                  },
+                  autosize: true,
+                  margin: { l: 200, r: 50, t: 50, b: 60 },
+                  font: { color: '#f8fafc', size: 12 }
+                }}
+                config={{
+                  responsive: true,
+                  displayModeBar: false
+                }}
+                style={{ width: '100%', height: '100%' }}
+              />
+            </div>
+          </Card>
+
+          {/* Detailed Correlations List */}
+          <Card 
+            title="Detailed Analysis"
+            subtitle="Correlation strength and direction for each factor"
+            className="shadow-xl"
+          >
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {allCorrelations.map((item, index) => {
+                const IconComponent = getCorrelationIcon(item.indicator);
+                const strength = getCorrelationStrength(item.correlation);
+                
+                return (
+                  <motion.div
+                    key={item.indicator}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex items-center justify-between p-4 bg-slate-900/30 rounded-xl hover:bg-slate-900/50 transition-all duration-200"
+                  >
+                    <div className="flex items-center gap-3">
+                      <IconComponent className="w-5 h-5 text-blue-400" />
+                      <div>
+                        <div className="font-medium text-slate-200">
+                          {item.indicatorName}
+                        </div>
+                        <div className={`text-sm ${strength.color}`}>
+                          {strength.label}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="text-right flex items-center gap-2">
+                      {item.correlation > 0 ? (
+                        <ArrowTrendingUpIcon className="w-5 h-5 text-green-400" />
+                      ) : (
+                        <ArrowTrendingDownIcon className="w-5 h-5 text-red-400" />
+                      )}
+                      <div className={`font-bold text-lg ${item.correlation > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {item.correlation.toFixed(3)}
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </Card>
         </div>
       )}
 
-      {}
-      {data.length > 0 && (
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">
-            📋 Complete Correlation Analysis
-          </h3>
-          
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Indicator
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Correlation Coefficient
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Relationship Strength
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Direction
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {data.map((item, index) => (
-                  <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {item.indicatorName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <span className={`font-mono ${item.correlation > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {item.correlation.toFixed(3)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        Math.abs(item.correlation) > 0.7 ? 'bg-red-100 text-red-800' :
-                        Math.abs(item.correlation) > 0.4 ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {Math.abs(item.correlation) > 0.7 ? 'Strong' : 
-                         Math.abs(item.correlation) > 0.4 ? 'Moderate' : 'Weak'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        item.correlation > 0 ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
-                      }`}>
-                        {item.correlation > 0 ? 'Positive' : 'Negative'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* Insights Section */}
+      {insights.length > 0 && (
+        <Card 
+          title="Key Insights"
+          subtitle="Automated analysis of India's happiness factors"
+          className="shadow-xl"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {insights.map((insight, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.2 }}
+                className="p-4 bg-slate-900/30 rounded-xl border border-slate-700/30"
+              >
+                <p className="text-slate-200">{insight}</p>
+              </motion.div>
+            ))}
           </div>
+        </Card>
+      )}
+
+      {/* Positive vs Negative Correlations Summary */}
+      {data.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Positive Correlations */}
+          <Card 
+            title="Positive Correlations"
+            subtitle="Factors that increase with happiness"
+            className="shadow-xl"
+          >
+            <div className="space-y-3">
+              {positiveCorrelations.slice(0, 5).map((item, index) => (
+                <div key={item.indicator} className="flex items-center justify-between p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+                  <span className="text-slate-200">{item.indicatorName}</span>
+                  <div className="flex items-center gap-2">
+                    <ArrowTrendingUpIcon className="w-4 h-4 text-green-400" />
+                    <span className="font-semibold text-green-400">+{item.correlation.toFixed(3)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Negative Correlations */}
+          <Card 
+            title="Negative Correlations"
+            subtitle="Factors that decrease with happiness"
+            className="shadow-xl"
+          >
+            <div className="space-y-3">
+              {negativeCorrelations.slice(0, 5).map((item, index) => (
+                <div key={item.indicator} className="flex items-center justify-between p-3 bg-red-500/10 rounded-lg border border-red-500/20">
+                  <span className="text-slate-200">{item.indicatorName}</span>
+                  <div className="flex items-center gap-2">
+                    <ArrowTrendingDownIcon className="w-4 h-4 text-red-400" />
+                    <span className="font-semibold text-red-400">{item.correlation.toFixed(3)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
       )}
     </div>

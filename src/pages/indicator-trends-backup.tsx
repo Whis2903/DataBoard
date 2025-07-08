@@ -44,8 +44,6 @@ const IndicatorTrends = () => {
     { code: 'BRA', name: 'Brazil', flag: '🇧🇷' },
   ];
 
-  const colors = ['#3b82f6', '#06b6d4', '#8b5cf6', '#10b981', '#f59e0b'];
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -190,15 +188,15 @@ const IndicatorTrends = () => {
               >
                 {availableIndicators.map((indicator) => (
                   <option key={indicator.code} value={indicator.code}>
-                    {indicator.icon} {indicator.name}
+                    {indicator.name}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Start Year */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-300">
+            {}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Start Year
               </label>
               <input
@@ -207,13 +205,13 @@ const IndicatorTrends = () => {
                 max="2024"
                 value={startYear}
                 onChange={(e) => setStartYear(parseInt(e.target.value))}
-                className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
-            {/* End Year */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-300">
+            {}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 End Year
               </label>
               <input
@@ -222,163 +220,108 @@ const IndicatorTrends = () => {
                 max="2024"
                 value={endYear}
                 onChange={(e) => setEndYear(parseInt(e.target.value))}
-                className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
+
+            {}
+            <div className="flex items-end">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Loading...' : 'Compare Countries'}
+              </button>
+            </div>
           </div>
-
-          {/* Submit Button */}
-          <motion.button
-            type="submit"
-            disabled={loading}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 px-6 rounded-xl font-medium hover:from-blue-600 hover:to-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-blue-500/25"
-          >
-            {loading ? (
-              <>
-                <ArrowPathIcon className="w-5 h-5 animate-spin" />
-                Loading Analysis...
-              </>
-            ) : (
-              <>
-                <PlayIcon className="w-5 h-5" />
-                Compare Countries
-              </>
-            )}
-          </motion.button>
         </form>
-      </Card>
+      </div>
 
-      {/* Error Display */}
+      {}
       {error && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl"
-        >
-          <p className="text-red-400 flex items-center gap-2">
-            ❌ {error}
-          </p>
-        </motion.div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-600">❌ {error}</p>
+        </div>
       )}
 
-      {/* Chart Display */}
+      {}
       {data.length > 0 && (
-        <Card
-          title={`${selectedIndicatorInfo?.name} Comparison`}
-          subtitle={`${country1Info?.name} vs ${country2Info?.name} (${startYear}-${endYear})`}
-          className="shadow-xl"
-        >
-          <div className="h-96 bg-slate-900/30 rounded-xl p-4">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h3 className="text-xl font-bold text-gray-900 mb-4">
+            {availableIndicators.find(ind => ind.code === selectedIndicator)?.name} Comparison: {selectedCountry1} vs {selectedCountry2} ({startYear}-{endYear})
+          </h3>
+          
+          <div className="h-96">
             <Plot
               data={Object.keys(data[0] || {}).filter(key => key !== 'year').map((country, index) => ({
                 x: data.map(item => item.year),
                 y: data.map(item => item[country]),
                 type: 'scatter',
                 mode: 'lines+markers',
-                name: countries.find(c => c.code === country)?.name || country,
+                name: country === selectedCountry1 ? `${selectedCountry1}` : `${selectedCountry2}`,
                 line: { color: colors[index % colors.length], width: 3 },
-                marker: { size: 8, color: colors[index % colors.length] }
+                marker: { size: 8 }
               }))}
               layout={{
                 title: {
-                  text: '',
-                  font: { size: 16, color: '#f8fafc' }
+                  text: `${availableIndicators.find(ind => ind.code === selectedIndicator)?.name}: ${selectedCountry1} vs ${selectedCountry2}`,
+                  font: { size: 16 }
                 },
-                paper_bgcolor: 'rgba(0,0,0,0)',
-                plot_bgcolor: 'rgba(0,0,0,0)',
-                xaxis: { 
-                  title: { text: 'Year', font: { color: '#94a3b8' } },
-                  color: '#94a3b8',
-                  gridcolor: '#334155'
-                },
+                xaxis: { title: { text: 'Year' } },
                 yaxis: { 
                   title: { 
-                    text: selectedIndicatorInfo?.name || 'Value',
-                    font: { color: '#94a3b8' }
-                  },
-                  color: '#94a3b8',
-                  gridcolor: '#334155'
+                    text: availableIndicators.find(ind => ind.code === selectedIndicator)?.name || 'Value'
+                  } 
                 },
                 autosize: true,
-                margin: { l: 80, r: 50, t: 50, b: 60 },
+                margin: { l: 80, r: 50, t: 80, b: 60 },
                 showlegend: true,
                 legend: { 
                   x: 0.02, 
                   y: 0.98,
-                  bgcolor: 'rgba(30, 41, 59, 0.8)',
-                  bordercolor: '#475569',
-                  borderwidth: 1,
-                  font: { color: '#f8fafc' }
+                  bgcolor: 'rgba(255,255,255,0.8)',
+                  bordercolor: '#ddd',
+                  borderwidth: 1
                 },
-                hovermode: 'x unified',
-                font: { color: '#f8fafc' }
+                hovermode: 'x unified'
               }}
-              config={{ 
-                responsive: true, 
-                displayModeBar: false,
-                toImageButtonOptions: {
-                  format: 'png',
-                  filename: 'country_comparison',
-                  height: 500,
-                  width: 700,
-                  scale: 1
-                }
-              }}
+              config={{ responsive: true, displayModeBar: false }}
               style={{ width: '100%', height: '100%' }}
             />
           </div>
-        </Card>
-      )}
 
-      {/* Summary Statistics */}
-      {data.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {[selectedCountry1, selectedCountry2].map((countryCode, index) => {
-            const countryInfo = countries.find(c => c.code === countryCode);
-            const countryData = data.map(d => d[countryCode]).filter(v => v !== undefined);
-            const avgValue = countryData.reduce((sum, val) => sum + val, 0) / countryData.length;
-            const minValue = Math.min(...countryData);
-            const maxValue = Math.max(...countryData);
-            const growth = ((countryData[countryData.length - 1] - countryData[0]) / countryData[0]) * 100;
+          {}
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[selectedCountry1, selectedCountry2].map((country, index) => {
+              const countryData = data.filter(item => item[country] !== undefined).map(item => item[country]);
+              const avgValue = countryData.length > 0 ? countryData.reduce((sum, val) => sum + val, 0) / countryData.length : 0;
+              const latestValue = countryData.length > 0 ? countryData[countryData.length - 1] : 0;
+              const growth = countryData.length > 1 ? ((latestValue - countryData[0]) / countryData[0] * 100) : 0;
 
-            return (
-              <Card key={countryCode} className="shadow-lg">
-                <div className="text-center">
-                  <h4 className="text-lg font-semibold text-slate-200 mb-4">
-                    {countryInfo?.flag} {countryInfo?.name}
-                  </h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-400">
-                        {avgValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                      </div>
-                      <div className="text-sm text-slate-400">Average</div>
+              return (
+                <div key={country} className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">{country} Statistics</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Latest Value ({endYear}):</span>
+                      <span className="font-semibold">{latestValue.toLocaleString()}</span>
                     </div>
-                    <div className="text-center">
-                      <div className={`text-2xl font-bold ${growth >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Average ({startYear}-{endYear}):</span>
+                      <span className="font-semibold">{avgValue.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Growth Rate:</span>
+                      <span className={`font-semibold ${growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {growth >= 0 ? '+' : ''}{growth.toFixed(1)}%
-                      </div>
-                      <div className="text-sm text-slate-400">Growth</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-semibold text-slate-300">
-                        {minValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                      </div>
-                      <div className="text-sm text-slate-400">Minimum</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-semibold text-slate-300">
-                        {maxValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                      </div>
-                      <div className="text-sm text-slate-400">Maximum</div>
+                      </span>
                     </div>
                   </div>
                 </div>
-              </Card>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

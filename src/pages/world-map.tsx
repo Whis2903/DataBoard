@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { toast } from 'react-hot-toast';
+import { CalendarIcon, GlobeAltIcon, TrophyIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import Plot from '../components/Charts';
+import Card from '../components/Card';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 interface CountryData {
   country: string;
@@ -18,7 +23,6 @@ const WorldMap = () => {
   const [error, setError] = useState('');
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-
   const availableYears = Array.from({ length: 14 }, (_, i) => 2024 - i);
 
   useEffect(() => {
@@ -34,7 +38,7 @@ const WorldMap = () => {
       const response = await fetch(`${API_BASE}/happiness/global/${selectedYear}`);
       const result = await response.json();
       
-      if (result.data) {
+      if (result.data) {
         const sortedData = result.data
           .sort((a: CountryData, b: CountryData) => b.happinessScore - a.happinessScore)
           .map((item: CountryData, index: number) => ({
@@ -44,14 +48,17 @@ const WorldMap = () => {
           }));
         
         setData(sortedData);
+        toast.success('Map data loaded successfully!');
       }
     } catch (err) {
       setError('Failed to fetch happiness distribution data');
+      toast.error('Failed to load map data');
       console.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  };
+
   const getCountryCode = (countryName: string): string => {
     const countryMap: Record<string, string> = {
       'Denmark': 'DNK', 'Switzerland': 'CHE', 'Iceland': 'ISL', 'Norway': 'NOR', 
@@ -101,21 +108,14 @@ const WorldMap = () => {
     return countryMap[countryName] || '';
   };
 
-  const getHappinessColor = (score: number) => {
-    if (score >= 7) return 'bg-green-600';
-    if (score >= 6) return 'bg-green-400';
-    if (score >= 5) return 'bg-yellow-400';
-    if (score >= 4) return 'bg-orange-400';
-    return 'bg-red-400';
+  const getHappinessCategory = (score: number) => {
+    if (score >= 7) return { label: 'Very Happy', color: 'text-green-400', bgColor: 'bg-green-500/20' };
+    if (score >= 6) return { label: 'Happy', color: 'text-green-300', bgColor: 'bg-green-400/20' };
+    if (score >= 5) return { label: 'Moderate', color: 'text-yellow-400', bgColor: 'bg-yellow-500/20' };
+    if (score >= 4) return { label: 'Low', color: 'text-orange-400', bgColor: 'bg-orange-500/20' };
+    return { label: 'Very Low', color: 'text-red-400', bgColor: 'bg-red-500/20' };
   };
 
-  const getHappinessLabel = (score: number) => {
-    if (score >= 7) return 'Very Happy';
-    if (score >= 6) return 'Happy';
-    if (score >= 5) return 'Moderate';
-    if (score >= 4) return 'Low';
-    return 'Very Low';
-  };
   const groupedByRegion = data.reduce((acc, country) => {
     if (!acc[country.region]) {
       acc[country.region] = [];
@@ -124,232 +124,295 @@ const WorldMap = () => {
     return acc;
   }, {} as Record<string, CountryData[]>);
 
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">🗺️ World Happiness Distribution</h2>
-        
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Select Year
-          </label>
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-            className="w-48 p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-          >
-            {availableYears.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
-        </div>
+  const regionalStats = Object.entries(groupedByRegion).map(([region, countries]) => {
+    const avgScore = countries.reduce((sum, c) => sum + c.happinessScore, 0) / countries.length;
+    const topCountry = countries[0];
+    return { region, avgScore, topCountry, count: countries.length };
+  }).sort((a, b) => b.avgScore - a.avgScore);
 
-        {}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Happiness Score Legend</h3>
-          <div className="flex flex-wrap gap-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-green-600 rounded"></div>
-              <span className="text-sm">Very Happy (7.0+)</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-green-400 rounded"></div>
-              <span className="text-sm">Happy (6.0-6.9)</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-yellow-400 rounded"></div>
-              <span className="text-sm">Moderate (5.0-5.9)</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-orange-400 rounded"></div>
-              <span className="text-sm">Low (4.0-4.9)</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-red-400 rounded"></div>
-              <span className="text-sm">Very Low (&lt; 4.0)</span>
+  const globalStats = data.length > 0 ? {
+    avgScore: data.reduce((sum, c) => sum + c.happinessScore, 0) / data.length,
+    topCountry: data[0],
+    bottomCountry: data[data.length - 1],
+    totalCountries: data.length
+  } : null;
+
+  return (
+    <div className="space-y-8">
+      <Card className="shadow-xl">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
+              <GlobeAltIcon className="w-8 h-8 text-blue-400" />
+              World Happiness Distribution
+            </h2>
+            <p className="text-slate-400 mt-2">
+              Explore global happiness patterns across countries and regions
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <CalendarIcon className="w-5 h-5 text-slate-400" />
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                className="p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              >
+                {availableYears.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
-      </div>
 
-      {}
-      {data.length > 0 && (
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">
-            🗺️ Interactive World Happiness Map ({selectedYear})
-          </h3>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {[
+            { range: '7.0+', label: 'Very Happy', color: 'bg-green-500' },
+            { range: '6.0-6.9', label: 'Happy', color: 'bg-green-400' },
+            { range: '5.0-5.9', label: 'Moderate', color: 'bg-yellow-400' },
+            { range: '4.0-4.9', label: 'Low', color: 'bg-orange-400' },
+            { range: '< 4.0', label: 'Very Low', color: 'bg-red-400' },
+          ].map(({ range, label, color }) => (
+            <div key={range} className="flex items-center gap-2 p-2 rounded-lg bg-slate-900/30">
+              <div className={`w-4 h-4 rounded ${color}`} />
+              <div>
+                <div className="text-xs text-slate-300 font-medium">{label}</div>
+                <div className="text-xs text-slate-500">{range}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {globalStats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card hoverable={false} className="text-center">
+            <div className="text-3xl font-bold text-blue-400 mb-2">
+              {globalStats.avgScore.toFixed(2)}
+            </div>
+            <div className="text-slate-400">Global Average</div>
+          </Card>
           
-          <div className="h-96 mb-4">
+          <Card hoverable={false} className="text-center">
+            <div className="text-2xl font-bold text-green-400 mb-2">
+              <TrophyIcon className="w-6 h-6 inline mr-1" />
+              #{globalStats.topCountry.rank}
+            </div>
+            <div className="text-slate-400">{globalStats.topCountry.country}</div>
+            <div className="text-sm text-green-300">{globalStats.topCountry.happinessScore.toFixed(2)}</div>
+          </Card>
+
+          <Card hoverable={false} className="text-center">
+            <div className="text-2xl font-bold text-red-400 mb-2">
+              #{globalStats.bottomCountry.rank}
+            </div>
+            <div className="text-slate-400">{globalStats.bottomCountry.country}</div>
+            <div className="text-sm text-red-300">{globalStats.bottomCountry.happinessScore.toFixed(2)}</div>
+          </Card>
+
+          <Card hoverable={false} className="text-center">
+            <div className="text-3xl font-bold text-purple-400 mb-2">
+              {globalStats.totalCountries}
+            </div>
+            <div className="text-slate-400">Countries</div>
+          </Card>
+        </div>
+      )}
+
+      {loading ? (
+        <Card className="h-96 flex items-center justify-center">
+          <LoadingSpinner size="lg" text="Loading world map..." />
+        </Card>
+      ) : data.length > 0 ? (
+        <Card 
+          title={`Interactive World Happiness Map (${selectedYear})`}
+          subtitle="Hover over countries to see detailed information"
+          className="shadow-xl"
+        >
+          <div className="h-96 bg-slate-900/30 rounded-xl p-4">
             <Plot
               data={[{
                 type: 'choropleth',
                 locations: data.filter(country => country.countryCode).map(country => country.countryCode!),
                 z: data.filter(country => country.countryCode).map(country => country.happinessScore),
-                text: data.filter(country => country.countryCode).map(country => `${country.country}<br>Happiness Score: ${country.happinessScore.toFixed(2)}<br>Rank: #${country.rank}<br>Region: ${country.region}`),
+                text: data.filter(country => country.countryCode).map(country => 
+                  `${country.country}<br>Happiness Score: ${country.happinessScore.toFixed(2)}<br>Rank: #${country.rank}<br>Region: ${country.region}`
+                ),
                 hovertemplate: '%{text}<extra></extra>',
                 colorscale: [
-                  [0, '#ef4444'],    
-                  [0.25, '#f97316'], 
-                  [0.5, '#eab308'],  
-                  [0.75, '#22c55e'], 
-                  [1, '#16a34a']     
+                  [0, '#ef4444'],
+                  [0.25, '#f97316'],
+                  [0.5, '#eab308'],
+                  [0.75, '#22c55e'],
+                  [1, '#16a34a']
                 ],
-                zmin: 2,
-                zmax: 8,
+                reversescale: false,
                 colorbar: {
-                  title: {
-                    text: 'Happiness Score',
-                    font: { size: 14 }
-                  },
-                  thickness: 15,
-                  len: 0.8,
-                  x: 1.02
+                  title: { text: 'Happiness Score' },
+                  titlefont: { color: '#f8fafc' },
+                  tickfont: { color: '#f8fafc' }
                 }
               }]}
               layout={{
-                title: {
-                  text: `World Happiness Distribution ${selectedYear}`,
-                  font: { size: 18 },
-                  x: 0.5
-                },
                 geo: {
                   showframe: false,
                   showcoastlines: true,
+                  coastlinecolor: '#475569',
                   projection: { type: 'natural earth' },
-                  bgcolor: '#f8fafc',
-                  coastlinecolor: '#64748b',
                   showland: true,
-                  landcolor: '#f1f5f9',
+                  landcolor: '#334155',
                   showocean: true,
-                  oceancolor: '#e2e8f0'
+                  oceancolor: '#1e293b',
+                  showcountries: true,
+                  countrycolor: '#475569'
                 },
-                autosize: true,
-                margin: { l: 0, r: 60, t: 60, b: 0 },
-                hoverlabel: {
-                  bgcolor: 'white',
-                  bordercolor: '#d1d5db',
-                  font: { size: 12 }
-                }
+                margin: { l: 0, r: 0, t: 0, b: 0 },
+                dragmode: false
               }}
-              config={{ 
-                responsive: true, 
+              config={{
+                responsive: true,
                 displayModeBar: false,
+                staticPlot: false,
+                scrollZoom: false,
+                doubleClick: false,
                 showTips: false
               }}
               style={{ width: '100%', height: '100%' }}
             />
           </div>
-          
-          {}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-            <div className="bg-green-50 p-4 rounded-lg">
-              <p className="text-sm text-green-600 font-medium">Happiest Country</p>
-              <p className="text-lg font-bold text-green-900">{data[0]?.country}</p>
-              <p className="text-sm text-green-600">{data[0]?.happinessScore.toFixed(2)}</p>
-            </div>
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <p className="text-sm text-blue-600 font-medium">Global Average</p>
-              <p className="text-2xl font-bold text-blue-900">
-                {(data.reduce((sum, c) => sum + c.happinessScore, 0) / data.length).toFixed(2)}
-              </p>
-            </div>
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <p className="text-sm text-yellow-600 font-medium">Countries Analyzed</p>
-              <p className="text-2xl font-bold text-yellow-900">{data.length}</p>
-            </div>
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <p className="text-sm text-purple-600 font-medium">Happiness Range</p>
-              <p className="text-lg font-bold text-purple-900">
-                {Math.min(...data.map(c => c.happinessScore)).toFixed(1)} - {Math.max(...data.map(c => c.happinessScore)).toFixed(1)}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+        </Card>
+      ) : null}
 
-      {}
-      {loading && (
-        <div className="bg-white rounded-lg shadow-lg p-6 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading happiness data for {selectedYear}...</p>
-        </div>
-      )}
-
-      {}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-600">❌ {error}</p>
-        </div>
-      )}
-
-      {}
-      {data.length > 0 && (
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">
-            🏆 Top 10 Happiest Countries ({selectedYear})
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {data.slice(0, 10).map((country, index) => (
-              <div
-                key={country.country}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+      {regionalStats.length > 0 && (
+        <Card 
+          title="Regional Analysis"
+          subtitle="Happiness statistics by geographical region"
+          className="shadow-xl"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {regionalStats.map(({ region, avgScore, topCountry, count }) => (
+              <motion.div
+                key={region}
+                whileHover={{ scale: 1.02 }}
+                className="p-4 bg-slate-900/30 rounded-xl border border-slate-700/30 hover:border-slate-600/50 transition-all duration-200"
               >
-                <div className="flex items-center space-x-3">
-                  <span className="text-lg font-bold text-gray-600">#{country.rank}</span>
-                  <div>
-                    <p className="font-semibold text-gray-900">{country.country}</p>
-                    <p className="text-sm text-gray-600">{country.region}</p>
+                <div className="flex items-center gap-2 mb-3">
+                  <MapPinIcon className="w-5 h-5 text-blue-400" />
+                  <h4 className="font-semibold text-slate-200">{region}</h4>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Average Score:</span>
+                    <span className={`font-medium ${getHappinessCategory(avgScore).color}`}>
+                      {avgScore.toFixed(2)}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Top Country:</span>
+                    <span className="text-slate-200">{topCountry.country}</span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Countries:</span>
+                    <span className="text-slate-200">{count}</span>
+                  </div>
+                  
+                  <div className={`text-center text-xs px-2 py-1 rounded ${getHappinessCategory(avgScore).bgColor} ${getHappinessCategory(avgScore).color}`}>
+                    {getHappinessCategory(avgScore).label}
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className={`inline-flex items-center px-2 py-1 rounded-full text-white text-sm ${getHappinessColor(country.happinessScore)}`}>
-                    {country.happinessScore.toFixed(2)}
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">{getHappinessLabel(country.happinessScore)}</p>
-                </div>
-              </div>
+              </motion.div>
             ))}
           </div>
+        </Card>
+      )}
+
+      {/* Top and Bottom Countries */}
+      {data.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Top 10 Happiest Countries */}
+          <Card 
+            title="🏆 Happiest Countries"
+            subtitle="Top 10 countries with highest happiness scores"
+            className="shadow-xl"
+          >
+            <div className="space-y-3">
+              {data.slice(0, 10).map((country, index) => (
+                <motion.div
+                  key={country.country}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="flex items-center justify-between p-3 bg-slate-900/30 rounded-lg hover:bg-slate-900/50 transition-all duration-200"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full ${index < 3 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' : 'bg-slate-600'} flex items-center justify-center text-sm font-bold text-white`}>
+                      {index + 1}
+                    </div>
+                    <span className="font-medium text-slate-200">{country.country}</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold text-green-400">
+                      {country.happinessScore.toFixed(2)}
+                    </div>
+                    <div className="text-xs text-slate-500">{country.region}</div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Bottom 10 Countries */}
+          <Card 
+            title="📉 Countries with Challenges"
+            subtitle="Countries with lower happiness scores"
+            className="shadow-xl"
+          >
+            <div className="space-y-3">
+              {data.slice(-10).reverse().map((country, index) => (
+                <motion.div
+                  key={country.country}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="flex items-center justify-between p-3 bg-slate-900/30 rounded-lg hover:bg-slate-900/50 transition-all duration-200"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-sm font-bold text-white">
+                      {country.rank}
+                    </div>
+                    <span className="font-medium text-slate-200">{country.country}</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold text-red-400">
+                      {country.happinessScore.toFixed(2)}
+                    </div>
+                    <div className="text-xs text-slate-500">{country.region}</div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </Card>
         </div>
       )}
 
-      {}
-      {Object.keys(groupedByRegion).length > 0 && (
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">
-            🌍 Regional Overview ({selectedYear})
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Object.entries(groupedByRegion).map(([region, countries]) => {
-              const avgScore = countries.reduce((sum, c) => sum + c.happinessScore, 0) / countries.length;
-              const topCountry = countries[0];
-              
-              return (
-                <div key={region} className="border border-gray-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">{region}</h4>
-                  <div className="space-y-2 text-sm">
-                    <p className="text-gray-600">
-                      <strong>Countries:</strong> {countries.length}
-                    </p>
-                    <p className="text-gray-600">
-                      <strong>Avg Score:</strong> {avgScore.toFixed(2)}
-                    </p>
-                    <p className="text-gray-600">
-                      <strong>Top Country:</strong> {topCountry.country} ({topCountry.happinessScore.toFixed(2)})
-                    </p>
-                    <div className={`inline-flex items-center px-2 py-1 rounded-full text-white text-xs ${getHappinessColor(avgScore)}`}>
-                      {getHappinessLabel(avgScore)}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+      {/* Error Display */}
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl"
+        >
+          <p className="text-red-400 flex items-center gap-2">
+            ❌ {error}
+          </p>
+        </motion.div>
       )}
     </div>
   );

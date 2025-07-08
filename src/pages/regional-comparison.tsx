@@ -1,20 +1,26 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { toast } from 'react-hot-toast';
+import { 
+  GlobeAsiaAustraliaIcon, 
+  ChartBarIcon,
+  MapPinIcon,
+  CalendarIcon,
+  AdjustmentsHorizontalIcon
+} from '@heroicons/react/24/outline';
 import Plot from '../components/Charts';
+import Card from '../components/Card';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 interface RegionCountry {
   country: string;
   happiness_score?: number;
   indicator_value?: number;
+  countryCode?: string;
+  region?: string;
   [key: string]: any;
-}
-
-interface RegionData {
-  region: string;
-  countries: RegionCountry[];
-  avgHappiness?: number;
-  avgIndicator?: number;
 }
 
 const RegionalComparison = () => {
@@ -29,14 +35,24 @@ const RegionalComparison = () => {
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
   const availableIndicators = [
-    { code: 'NY.GDP.PCAP.CD', name: 'GDP per capita' },
-    { code: 'SP.POP.TOTL', name: 'Population' },
-    { code: 'SH.XPD.CHEX.GD.ZS', name: 'Health expenditure (% of GDP)' },
-    { code: 'SE.XPD.TOTL.GD.ZS', name: 'Education expenditure (% of GDP)' },
-    { code: 'NY.GDP.MKTP.CD', name: 'GDP (current US$)' },
+    { code: 'NY.GDP.PCAP.CD', name: 'GDP per capita', icon: '💰', unit: 'USD' },
+    { code: 'SP.POP.TOTL', name: 'Population', icon: '👥', unit: 'people' },
+    { code: 'SH.XPD.CHEX.GD.ZS', name: 'Health expenditure (% of GDP)', icon: '🏥', unit: '%' },
+    { code: 'SE.XPD.TOTL.GD.ZS', name: 'Education expenditure (% of GDP)', icon: '🎓', unit: '%' },
+    { code: 'NY.GDP.MKTP.CD', name: 'GDP (current US$)', icon: '🏛️', unit: 'USD' },
   ];
 
   const availableYears = Array.from({ length: 14 }, (_, i) => 2024 - i);
+
+  const regionFlags: Record<string, string> = {
+    'South Asia': '🇮🇳',
+    'Europe & Central Asia': '🇪🇺',
+    'Middle East & North Africa': '🕌',
+    'Sub-Saharan Africa': '🌍',
+    'Latin America & Caribbean': '🌎',
+    'East Asia & Pacific': '🌏',
+    'North America': '🇺🇸'
+  };
 
   useEffect(() => {
     const loadRegions = async () => {
@@ -48,6 +64,7 @@ const RegionalComparison = () => {
         }
       } catch (err) {
         console.error('Failed to load regions:', err);
+        toast.error('Failed to load regions');
       }
     };
     loadRegions();
@@ -118,69 +135,89 @@ const RegionalComparison = () => {
         .sort((a, b) => (b.indicator_value || 0) - (a.indicator_value || 0));
 
       setData(validResults);
+      toast.success(`Loaded data for ${validResults.length} countries in ${selectedRegion}`);
     } catch (err) {
       setError('Failed to fetch regional comparison data');
+      toast.error('Failed to load regional data');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const getIndicatorName = (code: string) => {
-    return availableIndicators.find(ind => ind.code === code)?.name || code;
-  };
+  const selectedIndicatorInfo = availableIndicators.find(ind => ind.code === selectedIndicator);
+  const regionStats = data.length > 0 ? {
+    avgIndicator: data.reduce((sum, c) => sum + (c.indicator_value || 0), 0) / data.length,
+    avgHappiness: data.filter(c => c.happiness_score).reduce((sum, c) => sum + (c.happiness_score || 0), 0) / data.filter(c => c.happiness_score).length,
+    topCountry: data[0],
+    totalCountries: data.length
+  } : null;
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">🌏 Regional Comparison</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {}
+    <div className="space-y-8">
+      <Card className="shadow-xl">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <h2 className="text-3xl font-bold text-slate-100 flex items-center gap-3">
+              <GlobeAsiaAustraliaIcon className="w-8 h-8 text-cyan-400" />
+              Regional Comparison
+            </h2>
+            <p className="text-slate-400 mt-2">
+              Compare countries within specific regions across key indicators
+            </p>
+          </div>
+          
+          <div className="text-6xl">
+            {regionFlags[selectedRegion] || '🌍'}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-slate-300 flex items-center gap-2">
+              <MapPinIcon className="w-4 h-4" />
               Region
             </label>
             <select
               value={selectedRegion}
               onChange={(e) => setSelectedRegion(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-200"
             >
               {regions.map((region) => (
                 <option key={region} value={region}>
-                  {region}
+                  {regionFlags[region] || '🌍'} {region}
                 </option>
               ))}
             </select>
           </div>
 
-          {}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-slate-300 flex items-center gap-2">
+              <AdjustmentsHorizontalIcon className="w-4 h-4" />
               Indicator
             </label>
             <select
               value={selectedIndicator}
               onChange={(e) => setSelectedIndicator(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-200"
             >
               {availableIndicators.map((indicator) => (
                 <option key={indicator.code} value={indicator.code}>
-                  {indicator.name}
+                  {indicator.icon} {indicator.name}
                 </option>
               ))}
             </select>
           </div>
 
-          {}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-slate-300 flex items-center gap-2">
+              <CalendarIcon className="w-4 h-4" />
               Year
             </label>
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-200"
             >
               {availableYears.map((year) => (
                 <option key={year} value={year}>
@@ -190,145 +227,239 @@ const RegionalComparison = () => {
             </select>
           </div>
         </div>
-      </div>
 
-      {}
+        <div className="mt-6 p-4 bg-slate-900/50 rounded-xl border border-slate-600/30">
+          <div className="text-center">
+            <div className="text-sm text-slate-400 mb-1">Current Analysis</div>
+            <div className="font-medium text-slate-200">
+              {selectedIndicatorInfo?.icon} {selectedIndicatorInfo?.name} in {regionFlags[selectedRegion]} {selectedRegion} ({selectedYear})
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {regionStats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card hoverable={false} className="text-center">
+            <div className="text-3xl font-bold text-cyan-400 mb-2">
+              {regionStats.totalCountries}
+            </div>
+            <div className="text-slate-400">Countries</div>
+          </Card>
+          
+          <Card hoverable={false} className="text-center">
+            <div className="text-2xl font-bold text-blue-400 mb-2">
+              {regionStats.avgIndicator.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            </div>
+            <div className="text-slate-400">Avg {selectedIndicatorInfo?.name}</div>
+          </Card>
+
+          <Card hoverable={false} className="text-center">
+            <div className="text-2xl font-bold text-green-400 mb-2">
+              {regionStats.avgHappiness.toFixed(2)}
+            </div>
+            <div className="text-slate-400">Avg Happiness</div>
+          </Card>
+
+          <Card hoverable={false} className="text-center">
+            <div className="text-lg font-bold text-purple-400 mb-2">
+              {regionStats.topCountry?.country}
+            </div>
+            <div className="text-slate-400">Top Performer</div>
+          </Card>
+        </div>
+      )}
+
+      {/* Loading State */}
       {loading && (
-        <div className="bg-white rounded-lg shadow-lg p-6 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading regional comparison data...</p>
-        </div>
+        <Card className="h-64 flex items-center justify-center">
+          <LoadingSpinner size="lg" text={`Loading ${selectedRegion} data...`} />
+        </Card>
       )}
 
-      {}
+      {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-600">❌ {error}</p>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl"
+        >
+          <p className="text-red-400 flex items-center gap-2">
+            ❌ {error}
+          </p>
+        </motion.div>
+      )}
+
+      {/* Main Comparison Results */}
+      {data.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Bar Chart */}
+          <Card 
+            title={`${selectedIndicatorInfo?.name} by Country`}
+            subtitle={`${selectedRegion} - ${selectedYear}`}
+            className="shadow-xl"
+          >
+            <div className="h-96 bg-slate-900/30 rounded-xl p-4">
+              <Plot
+                data={[{
+                  x: data.slice(0, 10).map(d => d.country),
+                  y: data.slice(0, 10).map(d => d.indicator_value || 0),
+                  type: 'bar',
+                  marker: {
+                    color: data.slice(0, 10).map((_, index) => 
+                      `rgba(${59 + index * 20}, ${130 + index * 10}, ${246 - index * 5}, 0.8)`
+                    ),
+                    line: {
+                      color: '#1e293b',
+                      width: 1
+                    }
+                  },
+                  text: data.slice(0, 10).map(d => 
+                    (d.indicator_value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })
+                  ),
+                  textposition: 'auto',
+                  hovertemplate: '%{x}<br>%{y:,.2f} ' + (selectedIndicatorInfo?.unit || '') + '<extra></extra>'
+                }]}
+                layout={{
+                  title: {
+                    text: '',
+                    font: { color: '#f8fafc' }
+                  },
+                  paper_bgcolor: 'rgba(0,0,0,0)',
+                  plot_bgcolor: 'rgba(0,0,0,0)',
+                  xaxis: {
+                    title: { text: 'Countries', font: { color: '#94a3b8' } },
+                    color: '#94a3b8',
+                    gridcolor: '#334155',
+                    tickangle: -45
+                  },
+                  yaxis: {
+                    title: { 
+                      text: selectedIndicatorInfo?.name || 'Value', 
+                      font: { color: '#94a3b8' } 
+                    },
+                    color: '#94a3b8',
+                    gridcolor: '#334155'
+                  },
+                  autosize: true,
+                  margin: { l: 80, r: 50, t: 50, b: 120 },
+                  font: { color: '#f8fafc', size: 12 }
+                }}
+                config={{
+                  responsive: true,
+                  displayModeBar: false
+                }}
+                style={{ width: '100%', height: '100%' }}
+              />
+            </div>
+          </Card>
+
+          {/* Scatter Plot: Indicator vs Happiness */}
+          <Card 
+            title="Indicator vs Happiness Correlation"
+            subtitle="Explore the relationship between the indicator and happiness"
+            className="shadow-xl"
+          >
+            <div className="h-96 bg-slate-900/30 rounded-xl p-4">
+              <Plot
+                data={[{
+                  x: data.filter(d => d.happiness_score && d.indicator_value).map(d => d.indicator_value || 0),
+                  y: data.filter(d => d.happiness_score && d.indicator_value).map(d => d.happiness_score || 0),
+                  mode: 'markers',
+                  type: 'scatter',
+                  text: data.filter(d => d.happiness_score && d.indicator_value).map(d => d.country),
+                  marker: {
+                    size: 12,
+                    color: '#06b6d4',
+                    opacity: 0.7,
+                    line: {
+                      color: '#0891b2',
+                      width: 2
+                    }
+                  },
+                  hovertemplate: '%{text}<br>%{x:,.2f} ' + (selectedIndicatorInfo?.unit || '') + '<br>Happiness: %{y:.2f}<extra></extra>'
+                }]}
+                layout={{
+                  title: {
+                    text: '',
+                    font: { color: '#f8fafc' }
+                  },
+                  paper_bgcolor: 'rgba(0,0,0,0)',
+                  plot_bgcolor: 'rgba(0,0,0,0)',
+                  xaxis: {
+                    title: { 
+                      text: selectedIndicatorInfo?.name || 'Indicator Value', 
+                      font: { color: '#94a3b8' } 
+                    },
+                    color: '#94a3b8',
+                    gridcolor: '#334155'
+                  },
+                  yaxis: {
+                    title: { text: 'Happiness Score', font: { color: '#94a3b8' } },
+                    color: '#94a3b8',
+                    gridcolor: '#334155'
+                  },
+                  autosize: true,
+                  margin: { l: 80, r: 50, t: 50, b: 80 },
+                  font: { color: '#f8fafc', size: 12 }
+                }}
+                config={{
+                  responsive: true,
+                  displayModeBar: false
+                }}
+                style={{ width: '100%', height: '100%' }}
+              />
+            </div>
+          </Card>
         </div>
       )}
 
-      {}
+      {/* Country Rankings */}
       {data.length > 0 && (
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">
-            📊 {selectedRegion} Overview ({selectedYear})
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <p className="text-sm text-blue-600 font-medium">Countries Analyzed</p>
-              <p className="text-2xl font-bold text-blue-900">{data.length}</p>
-            </div>
-            <div className="bg-green-50 p-4 rounded-lg">
-              <p className="text-sm text-green-600 font-medium">Top Performer</p>
-              <p className="text-lg font-bold text-green-900">{data[0]?.country}</p>
-              <p className="text-sm text-green-600">{data[0]?.indicator_value?.toLocaleString()}</p>
-            </div>
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <p className="text-sm text-yellow-600 font-medium">Average {getIndicatorName(selectedIndicator)}</p>
-              <p className="text-2xl font-bold text-yellow-900">
-                {(data.reduce((sum, c) => sum + (c.indicator_value || 0), 0) / data.length).toLocaleString()}
-              </p>
-            </div>
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <p className="text-sm text-purple-600 font-medium">Average Happiness</p>
-              <p className="text-2xl font-bold text-purple-900">
-                {(data.filter(c => c.happiness_score).reduce((sum, c) => sum + (c.happiness_score || 0), 0) / 
-                  data.filter(c => c.happiness_score).length || 0).toFixed(2)}
-              </p>
-            </div>
+        <Card 
+          title="Country Rankings"
+          subtitle={`${selectedRegion} countries ranked by ${selectedIndicatorInfo?.name}`}
+          className="shadow-xl"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {data.slice(0, 12).map((country, index) => (
+              <motion.div
+                key={country.country}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="flex items-center justify-between p-4 bg-slate-900/30 rounded-xl hover:bg-slate-900/50 transition-all duration-200"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full ${
+                    index < 3 
+                      ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' 
+                      : 'bg-slate-600'
+                    } flex items-center justify-center text-sm font-bold text-white`}>
+                    {index + 1}
+                  </div>
+                  <div>
+                    <div className="font-medium text-slate-200">{country.country}</div>
+                    {country.happiness_score && (
+                      <div className="text-sm text-slate-400">
+                        Happiness: {country.happiness_score.toFixed(2)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="text-right">
+                  <div className="font-semibold text-cyan-400">
+                    {country.indicator_value?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    {selectedIndicatorInfo?.unit}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
-        </div>
-      )}
-
-      {}
-      {data.length > 0 && (
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">
-            🏆 Countries Ranked by {getIndicatorName(selectedIndicator)}
-          </h3>
-          
-          <div className="h-96">
-            <Plot
-              data={[{
-                x: data.map(item => item.indicator_value || 0),
-                y: data.map(item => item.country),
-                type: 'bar',
-                orientation: 'h',
-                marker: { color: '#3b82f6' },
-                name: getIndicatorName(selectedIndicator)
-              }]}
-              layout={{
-                title: {
-                  text: `Countries Ranked by ${getIndicatorName(selectedIndicator)}`,
-                  font: { size: 16 }
-                },
-                xaxis: { title: { text: getIndicatorName(selectedIndicator) } },
-                yaxis: { title: { text: 'Countries' } },
-                autosize: true,
-                margin: { l: 120, r: 50, t: 80, b: 60 },
-                showlegend: false
-              }}
-              config={{ responsive: true, displayModeBar: false }}
-              style={{ width: '100%', height: '100%' }}
-            />
-          </div>
-        </div>
-      )}
-
-      {}
-      {data.length > 0 && (
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">
-            📋 Detailed Rankings
-          </h3>
-          
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Rank
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Country
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {getIndicatorName(selectedIndicator)}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Happiness Score
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {data.map((country, index) => (
-                  <tr key={country.country} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        index === 0 ? 'bg-yellow-100 text-yellow-800' :
-                        index === 1 ? 'bg-gray-100 text-gray-800' :
-                        index === 2 ? 'bg-orange-100 text-orange-800' :
-                        'bg-blue-100 text-blue-800'
-                      }`}>
-                        #{index + 1}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {country.country}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {country.indicator_value?.toLocaleString() || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {country.happiness_score?.toFixed(2) || 'N/A'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        </Card>
       )}
     </div>
   );
