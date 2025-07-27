@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { 
@@ -23,8 +23,6 @@ interface CorrelationData {
 }
 
 const IndiaDashboard = () => {
-  const [startYear, setStartYear] = useState(2015);
-  const [endYear, setEndYear] = useState(2023);
   const [data, setData] = useState<CorrelationData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -32,11 +30,7 @@ const IndiaDashboard = () => {
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-  useEffect(() => {
-    handleAnalysis();
-  }, []);
-
-  const handleAnalysis = async () => {
+  const handleAnalysis = useCallback(async () => {
     setLoading(true);
     setError('');
     setData([]);
@@ -47,7 +41,7 @@ const IndiaDashboard = () => {
       const result = await response.json();
       
       if (result.data && result.data.correlations) {
-        const correlationData = result.data.correlations.map((item: any) => ({
+        const correlationData = result.data.correlations.map((item: { factorCode: string; correlation: number }) => ({
           indicator: item.factorCode,
           correlation: item.correlation,
           indicatorName: getIndicatorName(item.factorCode)
@@ -81,7 +75,11 @@ const IndiaDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
+
+  useEffect(() => {
+    handleAnalysis();
+  }, [handleAnalysis]);
 
   const getIndicatorName = (indicator: string) => {
     const indicatorMap: Record<string, string> = {
@@ -339,7 +337,7 @@ const IndiaDashboard = () => {
             className="shadow-xl"
           >
             <div className="space-y-3">
-              {positiveCorrelations.slice(0, 5).map((item, index) => (
+              {positiveCorrelations.slice(0, 5).map((item) => (
                 <div key={item.indicator} className="flex items-center justify-between p-3 bg-green-500/10 rounded-lg border border-green-500/20">
                   <span className="text-slate-200">{item.indicatorName}</span>
                   <div className="flex items-center gap-2">
@@ -358,7 +356,7 @@ const IndiaDashboard = () => {
             className="shadow-xl"
           >
             <div className="space-y-3">
-              {negativeCorrelations.slice(0, 5).map((item, index) => (
+              {negativeCorrelations.slice(0, 5).map((item) => (
                 <div key={item.indicator} className="flex items-center justify-between p-3 bg-red-500/10 rounded-lg border border-red-500/20">
                   <span className="text-slate-200">{item.indicatorName}</span>
                   <div className="flex items-center gap-2">

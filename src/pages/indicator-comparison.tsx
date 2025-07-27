@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
-import { ArrowTrendingUpIcon, ScaleIcon, ChartBarIcon } from '@heroicons/react/24/outline';
+import { ScaleIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 import Plot from '../components/Charts';
 import Card from '../components/Card';
-import LoadingSpinner from '../components/LoadingSpinner';
 
 interface ComparisonData {
   year: number;
@@ -109,8 +108,8 @@ const IndicatorComparison = () => {
       const indicatorName = availableIndicators.find(ind => ind.code === selectedIndicator)?.name || selectedIndicator;
 
       for (let year = startYear; year <= endYear; year++) {
-        const happinessItem = happinessData.find((item: any) => item.year === year);
-        const indicatorItem = indicatorData.find((item: any) => parseInt(item.year) === year);
+        const happinessItem = happinessData.find((item: { year: number }) => item.year === year);
+        const indicatorItem = indicatorData.find((item: { year: string }) => parseInt(item.year) === year);
 
         if (happinessItem && indicatorItem && indicatorItem.value !== null) {
           combinedData.push({

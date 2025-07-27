@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import LoadingSpinner from './LoadingSpinner';
+import type { Config as PlotlyConfig, Data as PlotlyData, Layout as PlotlyLayout } from 'plotly.js';
 
 const Plot = dynamic(() => import('react-plotly.js'), {
   ssr: false,
@@ -12,13 +13,21 @@ const Plot = dynamic(() => import('react-plotly.js'), {
   ),
 });
 
-const PlotWrapper = (props: any) => {
-  const defaultConfig = {
+interface PlotProps {
+  data: Partial<PlotlyData>[];
+  layout?: Partial<PlotlyLayout>;
+  config?: Partial<PlotlyConfig>;
+  style?: React.CSSProperties;
+  [key: string]: unknown;
+}
+
+const PlotWrapper = (props: PlotProps) => {
+  const defaultConfig: Partial<PlotlyConfig> = {
     responsive: true,
     displayModeBar: false,
     staticPlot: false,
     scrollZoom: false,
-    doubleClick: 'reset',
+    doubleClick: 'reset' as const,
     showTips: false,
     ...props.config
   };

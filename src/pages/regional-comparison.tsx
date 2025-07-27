@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { 
   GlobeAsiaAustraliaIcon, 
-  ChartBarIcon,
   MapPinIcon,
   CalendarIcon,
   AdjustmentsHorizontalIcon
@@ -20,7 +19,7 @@ interface RegionCountry {
   indicator_value?: number;
   countryCode?: string;
   region?: string;
-  [key: string]: any;
+  [key: string]: string | number | undefined;
 }
 
 const RegionalComparison = () => {
@@ -70,13 +69,7 @@ const RegionalComparison = () => {
     loadRegions();
   }, [API_BASE]);
 
-  useEffect(() => {
-    if (selectedRegion && selectedIndicator && selectedYear) {
-      handleComparison();
-    }
-  }, [selectedRegion, selectedIndicator, selectedYear]);
-
-  const handleComparison = async () => {
+  const handleComparison = useCallback(async () => {
     setLoading(true);
     setError('');
     setData([]);
@@ -95,11 +88,11 @@ const RegionalComparison = () => {
 
       const regionCountries = regionResult.data;
       
-      const countryPromises = regionCountries.map(async (countryInfo: any) => {
+      const countryPromises = regionCountries.map(async (countryInfo: { name: string; code: string }) => {
         try {
           const happinessResponse = await fetch(`${API_BASE}/happiness/global/${selectedYear}`);
           const happinessResult = await happinessResponse.json();
-          const countryHappiness = happinessResult.data?.find((h: any) => 
+          const countryHappiness = happinessResult.data?.find((h: { country: string; happinessScore: number }) => 
             h.country?.toLowerCase() === countryInfo.name?.toLowerCase()
           );
 
@@ -143,7 +136,13 @@ const RegionalComparison = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE, selectedRegion, selectedIndicator, selectedYear]);
+
+  useEffect(() => {
+    if (selectedRegion && selectedIndicator && selectedYear) {
+      handleComparison();
+    }
+  }, [handleComparison, selectedRegion, selectedIndicator, selectedYear]);
 
   const selectedIndicatorInfo = availableIndicators.find(ind => ind.code === selectedIndicator);
   const regionStats = data.length > 0 ? {

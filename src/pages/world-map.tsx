@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { CalendarIcon, GlobeAltIcon, TrophyIcon, MapPinIcon } from '@heroicons/react/24/outline';
@@ -25,11 +25,7 @@ const WorldMap = () => {
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
   const availableYears = Array.from({ length: 14 }, (_, i) => 2024 - i);
 
-  useEffect(() => {
-    handleYearChange();
-  }, [selectedYear]);
-
-  const handleYearChange = async () => {
+  const handleYearChange = useCallback(async () => {
     setLoading(true);
     setError('');
     setData([]);
@@ -57,7 +53,11 @@ const WorldMap = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE, selectedYear]);
+
+  useEffect(() => {
+    handleYearChange();
+  }, [handleYearChange]);
 
   const getCountryCode = (countryName: string): string => {
     const countryMap: Record<string, string> = {
@@ -252,8 +252,7 @@ const WorldMap = () => {
                 ],
                 reversescale: false,
                 colorbar: {
-                  title: { text: 'Happiness Score' },
-                  titlefont: { color: '#f8fafc' },
+                  title: { text: 'Happiness Score', font: { color: '#f8fafc' } },
                   tickfont: { color: '#f8fafc' }
                 }
               }]}

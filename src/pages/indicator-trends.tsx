@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { PlayIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import Plot from '../components/Charts';
 import Card from '../components/Card';
-import LoadingSpinner from '../components/LoadingSpinner';
 
 interface IndicatorData {
   year: number;
@@ -76,7 +75,7 @@ const IndicatorTrends = () => {
       const yearSet = new Set<number>();
 
       results.forEach(({ data: countryData }) => {
-        countryData.forEach((item: any) => {
+        countryData.forEach((item: { value: string | null; year: string }) => {
           if (item.value !== null) {
             yearSet.add(parseInt(item.year));
           }
@@ -87,7 +86,7 @@ const IndicatorTrends = () => {
         const yearData: IndicatorData = { year };
         
         results.forEach(({ country, data: countryData }) => {
-          const yearItem = countryData.find((item: any) => parseInt(item.year) === year);
+          const yearItem = countryData.find((item: { year: string; value: string | null }) => parseInt(item.year) === year);
           if (yearItem && yearItem.value !== null) {
             yearData[country] = parseFloat(yearItem.value);
           }
@@ -335,7 +334,7 @@ const IndicatorTrends = () => {
       {/* Summary Statistics */}
       {data.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {[selectedCountry1, selectedCountry2].map((countryCode, index) => {
+          {[selectedCountry1, selectedCountry2].map((countryCode) => {
             const countryInfo = countries.find(c => c.code === countryCode);
             const countryData = data.map(d => d[countryCode]).filter(v => v !== undefined);
             const avgValue = countryData.reduce((sum, val) => sum + val, 0) / countryData.length;
