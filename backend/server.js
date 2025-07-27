@@ -26,12 +26,9 @@ const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
       process.env.FRONTEND_URL,
-      'https://data-board-eight.vercel.app',
-      'https://data-board-ecoyaxy9d-whis2903s-projects.vercel.app',
+      'https://data-board-project.vercel.app',
       'http://localhost:3000',
-      'http://localhost:3001',
-      'https://localhost:3000',
-      'https://localhost:3001'
+      'http://localhost:3001'
     ].filter(Boolean);
 
     // Allow requests with no origin (mobile apps, etc.)
