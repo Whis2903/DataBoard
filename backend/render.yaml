@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: databoard-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: API_CACHE_TTL
+        value: 1800
+      - key: REQUEST_TIMEOUT
+        value: 30000
+      - key: WORLD_BANK_API_BASE
+        value: https://api.worldbank.org/v2
+      - key: WORLD_BANK_REQUEST_TIMEOUT
+        value: 10000
+      - key: RATE_LIMIT_WINDOW
+        value: 900000
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 100
+      - key: LOG_LEVEL
+        value: info
+      # You'll need to set FRONTEND_URL manually in Render dashboard
+      # - key: FRONTEND_URL
+      #   value: https://your-frontend-domain.vercel.app
