@@ -27,6 +27,7 @@ const corsOptions = {
     const allowedOrigins = [
       process.env.FRONTEND_URL,
       'https://data-board-eight.vercel.app',
+      'https://data-board-ecoyaxy9d-whis2903s-projects.vercel.app',
       'http://localhost:3000',
       'http://localhost:3001',
       'https://localhost:3000',
@@ -154,17 +155,6 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 // Handle server errors
 server.on('error', (err) => {
   console.error('Server error:', err);
-});
-
-module.exports = app;
-
-app.use('*', (req, res) => {
-  res.status(404).json({ error: 'Route not found' });
-});
-
-app.listen(PORT, () => {
-  console.log(`🚀 Backend server running on port ${PORT}`);
-  console.log(`📊 Cache initialized with 30 minute TTL`);
 });
 
 module.exports = app;
